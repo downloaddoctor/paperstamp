@@ -12,7 +12,6 @@
 #psDesignerChrome > * {
   pointer-events: auto;
 }
-
 /* ---------- Right stack (zoom / page-setup / geom / popovers) ---------- */
 
 #rightStack {

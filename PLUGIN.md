@@ -10,7 +10,6 @@
 - **layoutId** — name of a layout saved in the plugin's `localStorage` (`paperstampLayouts`). Usable only when host and iframe share an origin, or after the host pre-registers it.
 - **fieldValues** — `{ [item.name]: value }`. Applied to items whose `name` matches; `item.text` becomes `String(value)`. Unmatched items keep their design-time text.
 
-
 ---
 
 ## 2. Schemas
@@ -90,20 +89,19 @@ Plain objects via `postMessage`. Host -> iframe uses `contentWindow`; iframe -> 
 
 ### 4.1 Host -> plugin
 
-| `type`                      | Payload                                                       | Behaviour                                                                                                                      |
-| --------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `paperstamp:ping`           | `{}`                                                          | Ask plugin to (re)emit `paperstamp:ready`.                                                                                     |
-| `paperstamp:preview`        | `{ layoutDef, fieldValues? }`                                 | Render a layoutDef into the plugin without printing. Live preview.                                                             |
-| `paperstamp:previewById`    | `{ layoutId, fieldValues? }`                                  | Same as `preview` but resolves `layoutId` from plugin storage. Replies with nothing on success, `paperstamp:error` on failure. |
-| `paperstamp:print`          | `{ layoutDef, fieldValues?, options?: { persist?: boolean } }` | Stateless print. Preferred for cross-origin hosts.                                                                          |
-| `paperstamp:printById`      | `{ layoutId, fieldValues? }`                                  | Print a previously-registered layout from plugin storage.                                                                     |
-| `paperstamp:register`       | `{ layoutDef }`                                               | Upsert a named layout without printing. Requires `layoutDef.name`. Emits `paperstamp:ready` on success.                        |
-| `paperstamp:import`         | `{ layoutDef }`                                               | Replace the plugin's current state with `layoutDef`. Does not persist to storage.                                             |
-| `paperstamp:export`         | `{}`                                                          | Request the plugin's current in-memory layout as JSON. Replies with `paperstamp:exportResult`.                                 |
-| `paperstamp:listLayoutDefs` | `{}`                                                          | Request every saved layoutDef. Replies with `paperstamp:layoutDefs`.                                                           |
-| `paperstamp:openDesigner`   | `{}`                                                          | Lazy-load `designer.html` + `designer.js` + `designer.css` into the embedded plugin. Idempotent.                               |
-| `paperstamp:closeDesigner`  | `{}`                                                          | Tear down designer chrome, return to preview-only mode.                                                                        |
-
+| `type`                      | Payload                                                        | Behaviour                                                                                                                      |
+| --------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `paperstamp:ping`           | `{}`                                                           | Ask plugin to (re)emit `paperstamp:ready`.                                                                                     |
+| `paperstamp:preview`        | `{ layoutDef, fieldValues? }`                                  | Render a layoutDef into the plugin without printing. Live preview.                                                             |
+| `paperstamp:previewById`    | `{ layoutId, fieldValues? }`                                   | Same as `preview` but resolves `layoutId` from plugin storage. Replies with nothing on success, `paperstamp:error` on failure. |
+| `paperstamp:print`          | `{ layoutDef, fieldValues?, options?: { persist?: boolean } }` | Stateless print. Preferred for cross-origin hosts.                                                                             |
+| `paperstamp:printById`      | `{ layoutId, fieldValues? }`                                   | Print a previously-registered layout from plugin storage.                                                                      |
+| `paperstamp:register`       | `{ layoutDef }`                                                | Upsert a named layout without printing. Requires `layoutDef.name`. Emits `paperstamp:ready` on success.                        |
+| `paperstamp:import`         | `{ layoutDef }`                                                | Replace the plugin's current state with `layoutDef`. Does not persist to storage.                                              |
+| `paperstamp:export`         | `{}`                                                           | Request the plugin's current in-memory layout as JSON. Replies with `paperstamp:exportResult`.                                 |
+| `paperstamp:listLayoutDefs` | `{}`                                                           | Request every saved layoutDef. Replies with `paperstamp:layoutDefs`.                                                           |
+| `paperstamp:openDesigner`   | `{}`                                                           | Lazy-load `designer.html` + `designer.js` + `designer.css` into the embedded plugin. Idempotent.                               |
+| `paperstamp:closeDesigner`  | `{}`                                                           | Tear down designer chrome, return to preview-only mode.                                                                        |
 
 ### 4.2 Plugin -> host
 

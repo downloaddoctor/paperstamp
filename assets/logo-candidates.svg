@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" font-family="Inter, system-ui, sans-serif">
+  <style>
+    .frame { fill: none; stroke: #e4e6ec; stroke-width: 1; }
+    .ink-fill { fill: #1a1d29; }
+    .accent-fill { fill: #3454d1; }
+    .white-stroke { stroke: #fff; fill: none; stroke-width: 1.8; stroke-linecap: round; }
+    .ink-stroke { stroke: #1a1d29; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .label { fill: #5b6072; font-size: 9px; font-weight: 600; letter-spacing: .07em; }
+  </style>
+
+  <!-- Fusion 1: solid ink page body, white lines, ink press, accent bar -->
+  <g transform="translate(80, 80)">
+    <rect class="frame" x="-40" y="-60" width="80" height="96" rx="8"/>
+    <rect class="ink-fill" x="-18" y="-40" width="36" height="50" rx="3"/>
+    <path class="white-stroke" d="M-11 -30h22M-11 -24h22M-11 -18h22M-11 -12h14"/>
+    <g transform="translate(4, 6) rotate(-12)">
+      <path class="ink-stroke" d="M-6 -12h4v6h5a3 3 0 0 1 3 3v2h-20v-2a3 3 0 0 1 3-3h5z"/>
+      <rect class="accent-fill" x="-14" y="2" width="20" height="3" rx="1"/>
+    </g>
+    <text class="label" x="0" y="52" text-anchor="middle">SOLID INK PAGE</text>
+  </g>
+
+  <!-- Fusion 2: solid accent page body, white lines, white/ink press, ink bar -->
+  <g transform="translate(240, 80)">
+    <rect class="frame" x="-40" y="-60" width="80" height="96" rx="8"/>
+    <rect class="accent-fill" x="-18" y="-40" width="36" height="50" rx="3"/>
+    <path class="white-stroke" d="M-11 -30h22M-11 -24h22M-11 -18h22M-11 -12h14"/>
+    <g transform="translate(4, 6) rotate(-12)">
+      <path d="M-6 -12h4v6h5a3 3 0 0 1 3 3v2h-20v-2a3 3 0 0 1 3-3h5z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>
+      <rect class="ink-fill" x="-14" y="2" width="20" height="3" rx="1"/>
+    </g>
+    <text class="label" x="0" y="52" text-anchor="middle">SOLID ACCENT PAGE</text>
+  </g>
+</svg>
