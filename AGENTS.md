@@ -21,7 +21,7 @@ index.html -> host page; embeds sdk.html full-bleed, calls openDesigner() on rea
 sdk.html -> embed/print runtime, no build step; chrome-free until loadDesigner() called
 sdk.html?design=1 -> loads designer on boot
 sdk.html?layoutId=&data=<json> -> auto printLayout on boot
-SDK embed() -> autoShow (default true): on ready sends preview(defaultLayout) else printById(layoutId); openDesigner() lazy-loads designer into iframe
+SDK embed() -> autoShow (default true): on ready sends preview(defaultLayout) else printById(layoutId); openDesigner({layoutId}?) lazy-loads designer into iframe (with layoutId -> setDesignerLayout)
 no auto-close: plugin never calls window.close() (host owns iframe lifecycle)
 
 # MODULES
@@ -79,6 +79,8 @@ Print -> window.print() -> print CSS hides chrome + guide
 host embed -> SDK hidden iframe -> sdk.html -> emitReady() -> onReady({version, layouts})
 host print/register -> postMessage -> core.js MESSAGE_HANDLERS -> print/registerLayoutDef -> afterprint -> emitDone()
 designer open -> loadDesigner() -> fetch designer.html + designer.css + designer.js -> buildDom() injects template -> designer-mode
+setDesignerLayout(id) -> applyValidatedLayoutToState -> loadDesigner -> emit designer:setLayout -> applyDesignerLayout(id) selects+names canvas layout
+openDesigner({layoutId}) -> setDesignerLayout(layoutId) else loadDesigner()
 
 # SCHEMA
 item = {id, type:'text', x, y, w, h (% 0-100), text, name, fontSize (pt), align, valign}
@@ -107,6 +109,9 @@ PaperStamp.exportLayoutDef(name?) -> current in-memory state as {name, pageWmm, 
 PaperStamp.importLayoutDef(def, opts) -> sanitize + applyLayoutToState; does not persist unless caller separately calls registerLayoutDef
 PaperStamp.listLayouts() -> string[]
 PaperStamp.loadDesigner() -> Promise; fetches designer.html + designer.css + designer.js
+PaperStamp.openDesigner({layoutId}?) -> Promise; delegates to setDesignerLayout(layoutId) when given
+PaperStamp.setDesignerLayout(layoutId) -> Promise<bool>; loads designer, applies layout to canvas + designer select/name (designer:setLayout); no-op preview version is previewById()¦
+
 PaperStamp.on/emit -> event bus
 PaperStamp.itemHooks -> designer attaches handlers here
 PaperStamp.deepClone(obj) -> JSON round-trip clone
@@ -148,10 +153,10 @@ afterprint -> emitDone(); no window.close() — host owns iframe lifecycle
 designer:close event -> teardown removes injected nodes; window.PaperStampDesigner.init exposed so loadDesigner() can rebuild them on reopen
 
 # HOST-INTEGRATION
-host -> plugin: paperstamp:print | paperstamp:printById | paperstamp:preview | paperstamp:previewById | paperstamp:register | paperstamp:ping | paperstamp:openDesigner | paperstamp:closeDesigner | paperstamp:export | paperstamp:listLayoutDefs | paperstamp:import
+host -> plugin: paperstamp:print | paperstamp:printById | paperstamp:preview | paperstamp:previewById | paperstamp:register | paperstamp:ping | paperstamp:openDesigner | paperstamp:setDesignerLayout | paperstamp:closeDesigner | paperstamp:export | paperstamp:listLayoutDefs | paperstamp:import
 
 paperstamp:preview -> applyValidatedLayoutToState without triggerPrint (live preview)
-paperstamp:openDesigner -> loadDesigner(); paperstamp:closeDesigner -> emit('designer:close')
+paperstamp:openDesigner -> openDesigner(m); paperstamp:setDesignerLayout -> setDesignerLayout(m.layoutId); paperstamp:closeDesigner -> emit('designer:close')
 plugin -> host: paperstamp:ready {version, layouts[], layoutDefs{}} | paperstamp:done | paperstamp:error {code, message} | paperstamp:layoutDefs {layouts{}}
 
 error codes: E_BAD_MESSAGE, E_NO_LAYOUT, E_BAD_LAYOUT_DEF

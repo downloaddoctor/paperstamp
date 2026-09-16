@@ -64,7 +64,7 @@ instance methods: `preview({layoutDef, fieldValues?})`,
 `print({layoutDef, fieldValues?, options?})`,
 `printById(layoutId, fieldValues?, options?)`,
 `register(layoutDef)`, `ping()`, `isReady()`, `layouts()`, `layoutDefs()`, `listLayoutDefs(cb?)`, `previewById(id, fv?)`,
-`on('ready'|'done'|'error', fn)`, `openDesigner()`, `closeDesigner()`,
+`on('ready'|'done'|'error', fn)`, `openDesigner({layoutId?})`, `setDesignerLayout(layoutId)`, `closeDesigner()`,
 `export(cb?)`, `import(layoutDef, options?)`, `destroy()`.
 
 ## Schemas
@@ -94,7 +94,7 @@ type LayoutDef = {
 
 Host -> plugin: `paperstamp:preview` | `paperstamp:print` |
 `paperstamp:printById` | `paperstamp:register` | `paperstamp:ping` |
-`paperstamp:openDesigner` | `paperstamp:closeDesigner` |
+`paperstamp:openDesigner` | `paperstamp:setDesignerLayout` | `paperstamp:closeDesigner` |
 `paperstamp:export` | `paperstamp:import`
 
 Plugin -> host: `paperstamp:ready {version, layouts, layoutDefs}` |

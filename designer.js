@@ -1105,6 +1105,21 @@
 
   /* ---------- Init ---------- */
 
+  // Select + name + canvas sync to a saved layout id, without re-fetching
+  // the layout (core has already applied state when called from core).
+  function applyDesignerLayout(id) {
+    if (!id) return;
+    const data = core.getAllLayouts()[id];
+    if (!data) return;
+    core.applyValidatedLayoutToState(data, null, id);
+    populateLayoutSelect(id);
+    if (el.layoutSelect) el.layoutSelect.value = id;
+    if (el.layoutName) el.layoutName.value = id;
+    syncGuideDom();
+    syncPageSetupInputs();
+    setMode('design');
+  }
+
   async function init() {
     if (document.querySelector('#psDesignerChrome')) return;
     await buildDom();
@@ -1116,9 +1131,26 @@
     syncPageSetupInputs();
     render();
     fitPageToStage();
+    // Pick up a layout requested before the designer chrome existed.
+    const pid =
+      core.getPendingDesignerLayoutId && core.getPendingDesignerLayoutId();
+    if (pid) {
+      core.consumePendingDesignerLayoutId &&
+        core.consumePendingDesignerLayoutId();
+      applyDesignerLayout(pid);
+    }
     core.emit('designer:ready', {});
     core.emit('designer:mounted', {});
   }
+
+  core.onEvent('designer:setLayout', (p) => {
+    if (!p || !p.layoutId) return;
+    // Chrome not built yet -> init() will consume the pending id itself.
+    if (!document.querySelector('#psDesignerChrome')) return;
+    core.consumePendingDesignerLayoutId &&
+      core.consumePendingDesignerLayoutId();
+    applyDesignerLayout(p.layoutId);
+  });
 
   core.onEvent('designer:close', () => {
     if (el._canvasInput) {

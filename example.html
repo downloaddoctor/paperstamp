@@ -339,6 +339,12 @@
           >
             Open designer
           </button>
+          <button
+            id="b-opendesigner-layout"
+            title="Sends paperstamp:setDesignerLayout with the selected layout"
+          >
+            Open designer on layout
+          </button>
           <button id="b-closedesigner" title="Sends paperstamp:closeDesigner">
             Close designer
           </button>
@@ -513,8 +519,10 @@
       </details>
 
       <details>
-        <summary>paperstamp:openDesigner / closeDesigner</summary>
+        <summary>paperstamp:openDesigner / setDesignerLayout / closeDesigner</summary>
         <pre>{ type:'paperstamp:openDesigner' }</pre>
+        <pre>{ type:'paperstamp:openDesigner', layoutId:'my-layout' }</pre>
+        <pre>{ type:'paperstamp:setDesignerLayout', layoutId:'my-layout' }</pre>
         <pre>{ type:'paperstamp:closeDesigner' }</pre>
         <p>
           Lazily loads designer.html + designer.js + designer.css into the
@@ -792,6 +800,16 @@
       document.getElementById('b-opendesigner').onclick = () => {
         log('info', '→ paperstamp:openDesigner');
         lp.openDesigner();
+      };
+
+      document.getElementById('b-opendesigner-layout').onclick = () => {
+        const id = selectedId();
+        if (!id) {
+          log('warn', 'select a saved layout first');
+          return;
+        }
+        log('info', '→ paperstamp:setDesignerLayout ' + id);
+        lp.setDesignerLayout(id);
       };
 
       document.getElementById('b-closedesigner').onclick = () => {

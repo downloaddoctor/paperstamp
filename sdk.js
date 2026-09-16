@@ -217,9 +217,30 @@
        * Lazy-load the designer UI into the embedded plugin.
        * After load, all editing chrome becomes visible inside the iframe.
        * Idempotent — repeated calls are ignored after the first.
+       * Pass {layoutId} to open the designer with that saved layout
+       * selected (select + name + canvas), not just previewed.
        */
-      openDesigner() {
-        enqueue({ type: 'paperstamp:openDesigner' });
+      openDesigner(opts) {
+        const layoutId = opts && opts.layoutId;
+        if (layoutId)
+          enqueue({ type: 'paperstamp:setDesignerLayout', layoutId });
+        else enqueue({ type: 'paperstamp:openDesigner' });
+        return api;
+      },
+      /**
+       * Load the designer (if needed) and select a saved layout in it.
+       * Unlike previewById(), this sets the designer's layout name/select
+       * so Save/Delete operate on that layout, not an anonymous sheet.
+       */
+      setDesignerLayout(layoutId) {
+        if (!layoutId) {
+          emit('error', {
+            code: 'E_BAD_CALL',
+            message: 'setDesignerLayout() requires layoutId.'
+          });
+          return api;
+        }
+        enqueue({ type: 'paperstamp:setDesignerLayout', layoutId });
         return api;
       },
       /**

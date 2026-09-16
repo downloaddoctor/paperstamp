@@ -98,7 +98,8 @@ so you can read/write `paperstampLayouts` directly (hosted embedding cannot).
 
 To use the **designer** in your own app, also copy `designer.html`,
 `designer.css`, `designer.js` and load the designer via
-`lp.openDesigner()` or `sdk.html?design=1`.
+`lp.openDesigner()`, `lp.openDesigner({ layoutId })`,
+`lp.setDesignerLayout(layoutId)`, or `sdk.html?design=1`.
 
 ---
 
@@ -118,6 +119,10 @@ lp.printById('shipping-label', { name: 'Jane' });
 // Open / close the editor UI inside the embedded iframe
 lp.openDesigner();
 lp.closeDesigner();
+
+// Open the editor on a specific saved layout (select + name + canvas)
+lp.openDesigner({ layoutId: 'shipping-label' });
+lp.setDesignerLayout('shipping-label'); // same effect, explicit method
 
 // Round-trip the current in-plugin layout
 lp.export((def) => console.log(def));

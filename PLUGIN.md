@@ -92,7 +92,8 @@ Plain objects via `postMessage`. Host -> iframe uses `contentWindow`; iframe -> 
 | `paperstamp:import`         | `{ layoutDef }`                                                | Replace the plugin's current state with `layoutDef`. Does not persist to storage.                                              |
 | `paperstamp:export`         | `{}`                                                           | Request the plugin's current in-memory layout as JSON. Replies with `paperstamp:exportResult`.                                 |
 | `paperstamp:listLayoutDefs` | `{}`                                                           | Request every saved layoutDef. Replies with `paperstamp:layoutDefs`.                                                           |
-| `paperstamp:openDesigner`   | `{}`                                                           | Lazy-load `designer.html` + `designer.js` + `designer.css` into the embedded plugin. Idempotent.                               |
+| `paperstamp:openDesigner`   | `{ layoutId? }`                                                | Lazy-load `designer.html` + `designer.js` + `designer.css` into the embedded plugin. Idempotent. With `layoutId`, delegates to `setDesignerLayout`. |
+| `paperstamp:setDesignerLayout` | `{ layoutId }`                                              | Load the designer (if needed) and select `layoutId` in it — canvas + layout name/select — so Save/Delete target that layout.   |
 | `paperstamp:closeDesigner`  | `{}`                                                           | Tear down designer chrome, return to preview-only mode.                                                                        |
 
 ### 4.2 Plugin -> host
@@ -131,8 +132,10 @@ The plugin ships in two layers:
 The designer can be pulled in three ways:
 
 1. URL param: `sdk.html?design=1`. Opening `index.html` is equivalent — it embeds `sdk.html` and calls `openDesigner()` on ready.
-2. Host message: `postMessage({ type: 'paperstamp:openDesigner' })`.
-3. SDK method: `lp.openDesigner()`.
+2. Host message: `postMessage({ type: 'paperstamp:openDesigner' })` — or `{ type: 'paperstamp:openDesigner', layoutId }` / `{ type: 'paperstamp:setDesignerLayout', layoutId }` to open on a specific saved layout.
+3. SDK method: `lp.openDesigner()` — or `lp.openDesigner({ layoutId })` / `lp.setDesignerLayout(layoutId)`.
+
+`openDesigner({ layoutId })` and `setDesignerLayout(layoutId)` differ from `previewById()`: they set the designer's layout name/select to `layoutId`, so Save and Delete operate on that saved layout rather than an anonymous sheet.`previewById()` only paints the canvas.
 
 There is no `?embed=1` and no `body.embed-mode` — `sdk.html` is always the embed runtime, and it ships chrome-free until the designer is loaded. Loading the designer adds `body.designer-mode`; chrome comes from `designer.html` + `designer.css` (which are only fetched at that point). Closing via `paperstamp:closeDesigner` / `lp.closeDesigner()` removes the injected DOM and drops `designer-mode`.
 
@@ -178,7 +181,8 @@ The plugin ships chrome-free; the designer is only loaded on explicit request vi
 | `lp.import(layoutDef, options?)`                                    | Replace the plugin's current in-memory state with `layoutDef`. Does not persist to storage.         |
 | `lp.export(cb?)`                                                    | Request the plugin's current layout as JSON. `cb(layoutDef)` on reply; also emits `'exportResult'`. |
 | `lp.ping()`                                                         | Ask plugin to re-emit `paperstamp:ready`.                                                           |
-| `lp.openDesigner()`                                                 | Lazy-load the designer into the embedded plugin (idempotent).                                       |
+| `lp.openDesigner({ layoutId? })`                                     | Lazy-load the designer (idempotent). With `layoutId`, delegates to `lp.setDesignerLayout(layoutId)`. |
+| `lp.setDesignerLayout(layoutId)`                                    | Load the designer and select `layoutId` in it (canvas + name/select). Missing ids emit `E_NO_LAYOUT`. |
 | `lp.closeDesigner()`                                                | Remove designer chrome and revert to preview-only.                                                  |
 | `lp.on('ready'\|'done'\|'error'\|'exportResult'\|'layoutDefs', fn)` | Add a listener.                                                                                     |
 | `lp.destroy()`                                                      | Detach listeners, remove the iframe.                                                                |

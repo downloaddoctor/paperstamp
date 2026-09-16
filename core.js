@@ -660,6 +660,45 @@
     return designerLoading;
   }
 
+  /* Set which saved layout the designer shows (select + name + canvas).
+     Loads the designer on demand; idempotent when the designer is already
+     open. This is the "open designer on THIS layout" entry point, unlike
+     previewById() which only paints the canvas without touching designer UI. */
+  let pendingDesignerLayoutId = null;
+
+  function setDesignerLayout(layoutId) {
+    if (!layoutId) {
+      emitError('E_BAD_MESSAGE', 'setDesignerLayout requires layoutId.');
+      return Promise.resolve(false);
+    }
+    const data = getAllLayouts()[layoutId];
+    if (!data) {
+      emitError('E_NO_LAYOUT', 'Layout "' + layoutId + '" not found.');
+      return Promise.resolve(false);
+    }
+    const designerAlreadyMounted = !!document.querySelector('#psDesignerChrome');
+    pendingDesignerLayoutId = layoutId;
+    const result = applyValidatedLayoutToState(data, null, layoutId);
+    if (!result.ok) {
+      emitError('E_BAD_LAYOUT_DEF', result.errors.join('; '));
+      return Promise.resolve(false);
+    }
+    revealPage();
+    return loadDesigner().then(() => {
+      // If the designer chrome was already up, nudge it to sync select/name
+      // to the new layout. A fresh load already consumed pendingLayoutId in
+      // its init(), so emitting here would double-apply.
+      if (designerAlreadyMounted) emit('designer:setLayout', { layoutId });
+      return true;
+    });
+  }
+
+  function openDesigner(opts) {
+    const layoutId = opts && opts.layoutId;
+    if (layoutId) return setDesignerLayout(layoutId);
+    return loadDesigner();
+  }
+
   /* ---------- Message handling ---------- */
 
   const MESSAGE_HANDLERS = Object.freeze({
@@ -719,8 +758,15 @@
       registerLayoutDef(m.layoutDef);
       emitReady();
     },
-    'paperstamp:openDesigner'() {
-      loadDesigner();
+    'paperstamp:openDesigner'(m) {
+      openDesigner(m || null);
+    },
+    'paperstamp:setDesignerLayout'(m) {
+      if (!m.layoutId) {
+        emitError('E_BAD_MESSAGE', 'setDesignerLayout requires layoutId.');
+        return;
+      }
+      setDesignerLayout(m.layoutId);
     },
     'paperstamp:closeDesigner'() {
       emit('designer:close', {});
@@ -856,6 +902,14 @@
     emit,
     itemHooks,
     loadDesigner,
+    openDesigner,
+    setDesignerLayout,
+    getPendingDesignerLayoutId: () => pendingDesignerLayoutId,
+    consumePendingDesignerLayoutId: () => {
+      const v = pendingDesignerLayoutId;
+      pendingDesignerLayoutId = null;
+      return v;
+    },
     /** @returns {boolean} true once designer.js has finished loading */
     isDesignerLoaded: () => designerLoaded,
     isPrintInFlight: () => printInFlight,
