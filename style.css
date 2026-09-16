@@ -129,7 +129,7 @@ body.designer-mode.embed-mode .item-badge:not([hidden]) {
   height: 100vh;
   overflow: auto;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   padding: 48px;
   position: relative;

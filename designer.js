@@ -983,6 +983,7 @@
   /* ---------- Init ---------- */
 
   async function init() {
+    if (document.querySelector('#psDesignerChrome')) return;
     await buildDom();
     installItemHooks();
     wireEvents();

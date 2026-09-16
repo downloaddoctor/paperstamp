@@ -39,7 +39,9 @@ core.js
 -> printLayout(layoutId) / printStateless(def) -> validate + triggerPrint (2x rAF -> window.print); emitError on fail
 -> registerLayoutDef() upserts into paperstampLayouts
 -> listLayouts/getAllLayouts/setAllLayouts -> localStorage
--> loadDesigner() fetches designer.css + designer.js, adds body.designer-mode; idempotent; isDesignerLoaded() reflects completion
+-> loadDesigner() fetches designer.css + designer.js on first call only; adds body.designer-mode; isDesignerLoaded() reflects completion
+-> reopen after designer:close: loadDesigner() re-runs window.PaperStampDesigner.init() (rebuilds DOM via buildDom) instead of re-fetching script
+-> designer.js init() no-ops if #psDesignerChrome already mounted (idempotent vs double loadDesigner / duplicate host openDesigner)
 -> on/emit -> internal event bus (designer subscribes via core.on)
 -> MESSAGE_HANDLERS map -> paperstamp:ping|preview|previewById|print|printById|register|openDesigner|closeDesigner|listLayoutDefs
 
@@ -80,6 +82,7 @@ syncPageSetupInputs() reconciles pageSize/customW/customH/orientation inputs wit
 syncGuideDom() reconciles guideImg/src/opacity + guideOpacity slider with state (called after guide mutations)
 wireEvents scopes rail-btn/tool-popover queries to el.chrome (#psDesignerChrome) to avoid host-page collisions
 designer markup -> designer.html `<template id="ps-designer-root">`; injected nodes tagged [data-paperstamp-designer]
+designer.css link + designer.js script tags in <head> use separate [data-paperstamp-designer-asset] attr, excluded from designer:close teardown so CSS survives reopen
 
 # PRODUCTION
 see PRODUCTION.md for audit + browser matrix + operator checklist
@@ -127,7 +130,7 @@ body.silent-mode -> hides modePill/zoomBar/toolRail/popovers
 body.embed-mode -> hides all chrome (?embed=1)
 body.designer-mode -> reverts embed hiding for designer chrome
 afterprint -> emitDone(); window.close() only if autoPrintTriggered && !embed && window.parent !== window (never closes a standalone tab)
-designer:close event -> teardown removes injected nodes
+designer:close event -> teardown removes injected nodes; window.PaperStampDesigner.init exposed so loadDesigner() can rebuild them on reopen
 
 # HOST-INTEGRATION
 host -> plugin: paperstamp:print | paperstamp:printById | paperstamp:preview | paperstamp:previewById | paperstamp:register | paperstamp:ping | paperstamp:openDesigner | paperstamp:closeDesigner | paperstamp:export | paperstamp:listLayoutDefs | paperstamp:import

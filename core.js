@@ -525,17 +525,27 @@
   let designerLoading = null;
 
   function loadDesigner() {
-    if (designerLoaded) return Promise.resolve();
+    if (designerLoaded) {
+      // designer.js is already loaded, but a prior designer:close teardown
+      // removed its DOM. Re-run its init() to rebuild the chrome instead of
+      // re-fetching/re-executing the script.
+      const d = window.PaperStampDesigner;
+      if (d && typeof d.init === 'function') return Promise.resolve(d.init());
+      return Promise.resolve();
+    }
     if (designerLoading) return designerLoading;
     designerLoading = new Promise((resolve, reject) => {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
       link.href = 'designer.css';
-      link.dataset.paperstampDesigner = '1';
+      // Distinct attribute from chrome-content nodes: designer:close teardown
+      // only removes [data-paperstamp-designer], never these <head> assets,
+      // so the stylesheet survives a close/reopen cycle.
+      link.dataset.paperstampDesignerAsset = '1';
       document.head.appendChild(link);
       const script = document.createElement('script');
       script.src = 'designer.js';
-      script.dataset.paperstampDesigner = '1';
+      script.dataset.paperstampDesignerAsset = '1';
       script.onload = () => {
         designerLoaded = true;
         resolve();
