@@ -45,19 +45,11 @@ type LayoutDef = {
 
 ## 2.1 Security
 
-The plugin validates incoming messages: `e.source` must be `window.parent` (or `window`), and `e.origin` must match the trusted origin. Trusted origin is resolved, in order:
+The plugin does **not** enforce origin. Any host may embed and drive it: inbound messages are accepted when `e.source` is `window.parent` (or `window`); `e.origin` is not checked. Outbound `postMessage` uses `'*'`.
 
-1. `?hostOrigin=<origin>` query param on the plugin URL.
-2. `document.referrer` origin (when the iframe is loaded from a host page).
-3. `'*'` fallback — **do not rely on this in production.**
+Do not pass `origin:` to `PaperStamp.embed()` — it is ignored. No `?hostOrigin=` query param is used.
 
-Recommended host setup:
-
-```js
-PaperStamp.embed({ origin: 'https://host.example.com', ... });
-```
-
-The SDK appends `?hostOrigin=<origin>` to the plugin URL automatically and validates `e.origin` against the same value in the reverse direction. Outbound `postMessage` uses the resolved trusted origin, never `'*'`, once an origin is known.
+Anyone who can frame the plugin can drive it. Load it only on pages you control, or sandbox the iframe if that matters.
 
 **Storage cap:** `paperstampLayouts` is capped at 100 entries; older keys are evicted on overflow. `print`/`printStateless` only persist a layout when called with `options.persist === true` (or when `layoutDef.name` is set and the caller opts in). Explicit `register` always persists.
 
@@ -66,7 +58,7 @@ The SDK appends `?hostOrigin=<origin>` to the plugin URL automatically and valid
 ```html
 <iframe
   id="pf"
-  src="https://your-host/paperstamp/sdk.html?hostOrigin=https%3A%2F%2Fhost.example.com"
+  src="https://your-host/paperstamp/sdk.html"
   style="width:0;height:0;border:0;position:absolute"
   aria-hidden="true"
 ></iframe>
@@ -118,14 +110,13 @@ Error codes
 - `E_BAD_MESSAGE` — not an object, or `type` missing/unknown, or a message missing required fields.
 - `E_NO_LAYOUT` — `printById` for a `layoutId` not present in plugin storage.
 - `E_BAD_LAYOUT_DEF` — a `layoutDef` whose `items` is not an array, or which fails sanitization.
-- `E_BAD_ORIGIN` — message rejected because `e.origin` did not match the trusted host origin.
 - `E_PRINT_BLOCKED` — `window.print()` threw (e.g. iframe sandbox without `allow-modals`).
 - `E_UNKNOWN_MESSAGE` — (SDK-side) plugin sent a `type` the SDK does not recognize.
 
 ### 4.3 Origin / security
 
-- The plugin validates inbound messages: `e.source` must be `window.parent` (or `window`), and `e.origin` must match the trusted origin (`?hostOrigin=` > `document.referrer` origin > `'*'`). Mismatches are rejected with `E_BAD_ORIGIN`.
-- Plugin replies go to `window.parent` using the resolved trusted origin, never `'*'` once an origin is known.
+- Origin is **not** enforced. The plugin accepts messages when `e.source` is `window.parent` (or `window`), regardless of `e.origin`. Plugin replies go to `window.parent` with `'*'`.
+- Only frame the plugin on pages you control. Any framer can drive it.
 - `item.text` is rendered via `textContent` — HTML in field values is not interpreted. Do not change this without sanitising.
 
 ---
@@ -163,7 +154,7 @@ No `src` needed: the SDK derives `sdk.html` from its own `<script src>`.
 | ------------------ | -------------- | ------------------------------------------------------------------------ |
 | `src`              | string         | Plugin URL. Optional — derived from SDK's own script URL when omitted.   |
 | `container`        | HTMLElement    | Where to append the hidden iframe. Default `document.body`.              |
-| `origin`           | string         | Target origin for outbound postMessage. Derived from `src` when omitted. |
+| `origin`           | string         | Ignored — origin is not enforced; outbound postMessage always uses `'*'`. |
 | `width` / `height` | number\|string | Iframe size. Default `0`.                                                |
 | `onReady(info)`    | fn             | `info = { version, layouts }`. Fires once per load (and after `ping`).   |
 | `onDone(job)`      | fn             | Fires when the plugin's print dialog closes.                             |

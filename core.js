@@ -161,23 +161,11 @@
 
   /* ---------- Host protocol ---------- */
 
-  /* Resolve the origin we should trust for postMessage. */
-  const TRUSTED_ORIGIN = (() => {
-    const explicit = params.get('hostOrigin');
-    if (explicit && explicit !== '*') return explicit;
-    if (document.referrer) {
-      try {
-        return new URL(document.referrer).origin;
-      } catch (e) {
-        /* malformed referrer URL — fall through to '*' */
-      }
-    }
-    return '*';
-  })();
+  /* Origin is not enforced — any host may embed and drive this plugin. */
   function post(type, payload) {
     if (window.parent === window) return;
     try {
-      window.parent.postMessage({ type, ...(payload || {}) }, TRUSTED_ORIGIN);
+      window.parent.postMessage({ type, ...(payload || {}) }, '*');
     } catch (e) {
       /* postMessage can throw in sandboxed/cross-origin iframes — non-fatal */
     }
@@ -777,10 +765,6 @@
 
   window.addEventListener('message', (e) => {
     if (e.source !== window.parent && e.source !== window) return;
-    if (TRUSTED_ORIGIN !== '*' && e.origin && e.origin !== TRUSTED_ORIGIN) {
-      emitError('E_BAD_ORIGIN', 'Rejected message from ' + e.origin);
-      return;
-    }
     const m = e.data;
     if (!m || typeof m !== 'object' || typeof m.type !== 'string') return;
     const h = MESSAGE_HANDLERS[m.type];
@@ -862,8 +846,8 @@
     setAllLayouts,
     registerLayoutDef,
     post,
-    /** @returns {string} resolved trusted origin for postMessage */
-    trustedOrigin: () => TRUSTED_ORIGIN,
+    /** @returns {string} postMessage target origin (always '*' — not enforced) */
+    trustedOrigin: () => '*',
     emitReady,
     emitDone,
     emitError,

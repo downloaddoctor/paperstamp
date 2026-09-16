@@ -33,7 +33,6 @@ Point a `<script>` at the Pages-hosted `sdk.js` and call `PaperStamp.embed()`.
 <script src="https://downloaddoctor.github.io/paperstamp/sdk.js"></script>
 <script>
   const lp = PaperStamp.embed({
-    origin: location.origin, // your site's origin
     onReady: ({ layouts }) => console.log('ready', layouts),
     onDone: (job) => console.log('printed', job),
     onError: (err) => console.error(err.code, err.message)
@@ -65,14 +64,15 @@ Point a `<script>` at the Pages-hosted `sdk.js` and call `PaperStamp.embed()`.
 </script>
 ```
 
-**Origin note:** paperstamp validates `postMessage` origins. When you embed the
-hosted copy, pass your site's origin via `origin:` (the SDK forwards it to the
-plugin as `?hostOrigin=`). Without it the plugin falls back to
-`document.referrer`, then `'*'`.
+**Origin note:** paperstamp does **not** validate `postMessage` origins — any
+host can embed and drive it. No `origin:` option and no `?hostOrigin=` handshake
+are needed (passing `origin:` is ignored).
 
-Cross-origin means you **cannot** read/write the plugin's `localStorage`
-directly — send everything in the message (`layoutDef` / `fieldValues`), which is
-the normal path anyway.
+Layouts are stored in the **plugin's origin** `localStorage`. When you embed the
+hosted copy that storage belongs to `downloaddoctor.github.io`, not your site —
+so you **cannot** read/write it directly. Send everything in the message
+(`layoutDef` / `fieldValues`), or use `listLayoutDefs()` / `previewById()` /
+`printById()` to work against the plugin's own storage.
 
 ---
 
@@ -93,8 +93,8 @@ Then:
 <script src="/vendor/paperstamp/sdk.js"></script>
 ```
 
-Same-origin self-hosting unlocks `layoutId` / `printById` against the plugin's
-`localStorage`, and avoids the `hostOrigin` handshake.
+Same-origin self-hosting puts the plugin's `localStorage` on your own origin,
+so you can read/write `paperstampLayouts` directly (hosted embedding cannot).
 
 To use the **designer** in your own app, also copy `designer.html`,
 `designer.css`, `designer.js` and load the designer via

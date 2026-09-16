@@ -26,7 +26,7 @@
   function createInstance(iframe, opts) {
     const inst = {
       ready: false,
-      origin: opts.origin || '*',
+      origin: '*',
       queue: [],
       layouts: [],
       layoutDefs: {},
@@ -44,8 +44,6 @@
         layoutDefs: []
       }
     };
-    const expectOrigin =
-      inst.origin !== '*' ? inst.origin : opts.expectOrigin || null;
 
     function emit(name, payload) {
       (inst.listeners[name] || []).forEach((fn) => {
@@ -70,7 +68,6 @@
     }
     function onMessage(e) {
       if (e.source !== iframe.contentWindow) return;
-      if (expectOrigin && e.origin !== expectOrigin) return;
       const msg = e.data;
       if (!msg || typeof msg !== 'object' || typeof msg.type !== 'string')
         return;
@@ -278,7 +275,7 @@
    * Create a hidden iframe pointed at PaperStamp.
    * opts:
    *   src           - plugin URL (auto-derived from sdk.js location)
-   *   origin        - postMessage target origin (auto-derived from src)
+   *   origin        - ignored (origin not enforced; postMessage always uses '*')
    *   width/height  - iframe size (default 0x0, hidden)
    *   container     - parent element (default document.body)
    *   autoShow      - if true (default), SDK auto-sends a layout after ready
@@ -294,22 +291,11 @@
         'PaperStamp.embed: could not resolve plugin URL. Pass opts.src explicitly.'
       );
 
-    let origin = opts.origin;
-    let originFallbackToAny = false;
-    if (!origin) {
-      try {
-        origin = new URL(src, window.location.href).origin;
-      } catch (e) {
-        origin = '*';
-        originFallbackToAny = true;
-      }
-    }
+    const origin = '*'; // origin not enforced — any host allowed
 
     const iframe = document.createElement('iframe');
-    if (originFallbackToAny) {
-      iframe.setAttribute('role', 'application');
-      iframe.setAttribute('aria-label', 'PaperStamp print surface');
-    }
+    iframe.setAttribute('role', 'application');
+    iframe.setAttribute('aria-label', 'PaperStamp print surface');
     iframe.setAttribute('aria-hidden', 'true');
     iframe.setAttribute('title', 'PaperStamp');
     if (opts.hidden !== false && opts.width == null && opts.height == null)
@@ -324,22 +310,12 @@
       h +
       ';position:' +
       pos;
-    let srcWithHostOrigin = src;
-    if (opts.origin && opts.origin !== '*') {
-      try {
-        const u = new URL(src, window.location.href);
-        u.searchParams.set('hostOrigin', opts.origin);
-        srcWithHostOrigin = u.toString();
-      } catch (e) {
-        /* malformed src URL — use original src without hostOrigin param */
-      }
-    }
-    iframe.src = srcWithHostOrigin;
+    iframe.src = src;
     (opts.container || document.body).appendChild(iframe);
 
     return createInstance(
       iframe,
-      Object.assign({}, opts, { origin, src: srcWithHostOrigin })
+      Object.assign({}, opts, { origin, src })
     );
   }
 

@@ -162,15 +162,14 @@ item.text set via textContent -> no HTML injection
 none — pure static client-side (no build, no server, no deps)
 runtime config via URL params on sdk.html:
   ?design=1 load designer on boot
-  ?hostOrigin=<origin> trusted postMessage origin (overrides document.referrer)
   ?layoutId=&data=<json> auto printLayout on boot
 
 # SECURITY
-post() sends to TRUSTED_ORIGIN (hostOrigin > referrer origin > '*')
-inbound message listener gates on e.source === window.parent && e.origin === TRUSTED_ORIGIN (when not '*')
+origin is not enforced — post() sends to '*' and inbound messages are accepted on e.source === window.parent || window
+e.origin is not checked; ?hostOrigin= and embed({origin}) are ignored
+only frame the plugin on pages you control (any framer can drive it)
 unknown message type -> emitError('E_BAD_MESSAGE')
-SDK validates e.origin on incoming messages; appends ?hostOrigin= to plugin URL
-error codes: E_BAD_ORIGIN E_BAD_MESSAGE E_BAD_LAYOUT_DEF E_NO_LAYOUT E_PRINT_BLOCKED
+error codes: E_BAD_MESSAGE E_BAD_LAYOUT_DEF E_NO_LAYOUT E_PRINT_BLOCKED
 
 # STORAGE
 paperstampLayouts capped at MAX_LAYOUTS=100 (LRU evict on overflow, timestamps in paperstampLayoutsLru)
