@@ -90,30 +90,30 @@ Plain objects via `postMessage`. Host -> iframe uses `contentWindow`; iframe -> 
 
 ### 4.1 Host -> plugin
 
-| `type`                      | Payload                                                       | Behaviour                                                                                                                              |
-| --------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --- | ------------------------- | ---- | ------------------------------------------------------------------------------------------------ |
-| `paperstamp:preview`        | `{ layoutDef, fieldValues? }`                                 | Render a layoutDef into the plugin without printing. Live preview.                                                                     |
-| `paperstamp:print`          | `{ layoutDef, fieldValues?, options?: { silent?: boolean } }` | Stateless print. Preferred.                                                                                                            |
-| `paperstamp:printById`      | `{ layoutId, fieldValues?, options?: { silent?: boolean } }`  | Print a previously-registered layout from plugin storage.                                                                              |
-| `paperstamp:register`       | `{ layoutDef }`                                               | Upsert a layout without printing. Requires `layoutDef.name`.                                                                           |
-| `paperstamp:ping`           | `{}`                                                          | Ask plugin to (re)emit `paperstamp:ready`.                                                                                             |     | `paperstamp:openDesigner` | `{}` | Lazy-load `designer.html` + `designer.js` + `designer.css` into the embedded plugin. Idempotent. |
-| `paperstamp:closeDesigner`  | `{}`                                                          | Tear down designer chrome, return to preview-only mode.                                                                                |
-| `paperstamp:export`         | `{}`                                                          | Request the plugin's current in-memory layout as JSON. Replies with `paperstamp:exportResult`.                                         |
-| `paperstamp:listLayoutDefs` | `{}`                                                          | Request every saved layoutDef. Replies with `paperstamp:layoutDefs`.                                                                   |
-| `paperstamp:previewById`    | `{ layoutId, fieldValues? }`                                  | Load a saved layout into the plugin and render it. Does **not** print. Replies with nothing on success, `paperstamp:error` on failure. |     |
-
-| `paperstamp:import` | `{ layoutDef, options?: { silent?: boolean } }` | Replace the plugin's current state with `layoutDef`. Does not persist to storage. |
+| `type`                      | Payload                                                       | Behaviour                                                                                                                         |
+| --------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `paperstamp:ping`           | `{}`                                                          | Ask plugin to (re)emit `paperstamp:ready`.                                                                                        |
+| `paperstamp:preview`        | `{ layoutDef, fieldValues? }`                                 | Render a layoutDef into the plugin without printing. Live preview. Always silent — no chrome state change beyond `silent-mode`.   |
+| `paperstamp:previewById`    | `{ layoutId, fieldValues? }`                                  | Same as `preview` but resolves `layoutId` from plugin storage. Replies with nothing on success, `paperstamp:error` on failure.    |
+| `paperstamp:print`          | `{ layoutDef, fieldValues?, options?: { silent?: boolean } }` | Stateless print. Preferred for cross-origin hosts.                                                                                |
+| `paperstamp:printById`      | `{ layoutId, fieldValues?, options?: { silent?: boolean } }`  | Print a previously-registered layout from plugin storage.                                                                         |
+| `paperstamp:register`       | `{ layoutDef }`                                               | Upsert a named layout without printing. Requires `layoutDef.name`. Emits `paperstamp:ready` on success.                           |
+| `paperstamp:import`         | `{ layoutDef, options?: { silent?: boolean } }`               | Replace the plugin's current state with `layoutDef`. Does not persist to storage.                                                 |
+| `paperstamp:export`         | `{}`                                                          | Request the plugin's current in-memory layout as JSON. Replies with `paperstamp:exportResult`.                                    |
+| `paperstamp:listLayoutDefs` | `{}`                                                          | Request every saved layoutDef. Replies with `paperstamp:layoutDefs`.                                                              |
+| `paperstamp:openDesigner`   | `{}`                                                          | Lazy-load `designer.html` + `designer.js` + `designer.css` into the embedded plugin. Idempotent.                                  |
+| `paperstamp:closeDesigner`  | `{}`                                                          | Tear down designer chrome, return to preview-only mode.                                                                           |
+| `paperstamp:setSilent`      | `{ silent: boolean }`                                         | Toggle `body.silent-mode` directly. Rarely needed — `preview`/`previewById` are always silent and `print`/`printById` honor `options.silent`. |
 
 ### 4.2 Plugin -> host
 
-| `type`             | Payload                                                                 | When                                                                             |
-| ------------------ | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------- | --- |
-| `paperstamp:ready` | `{ version, layouts: string[], layoutDefs: Record<string, LayoutDef> }` | On load, after `register`, and in reply to `ping` — hosts must tolerate repeats. |     |
-
-| `paperstamp:done` | `{ layoutId?, layoutName? }` | After `afterprint` following a plugin-initiated print. |
-| `paperstamp:layoutDefs` | `{ layouts: Record<string, LayoutDef> }` | Reply to `paperstamp:listLayoutDefs`. |
-
-| `paperstamp:error` | `{ code, message }` | Bad payload / missing layout / invalid layoutDef. |
+| `type`                     | Payload                                                                 | When                                                                              |
+| -------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `paperstamp:ready`         | `{ version, layouts: string[], layoutDefs: Record<string, LayoutDef> }` | On load, after `register`, and in reply to `ping` — hosts must tolerate repeats.  |
+| `paperstamp:done`          | `{ layoutId?, layoutName? }`                                            | After `afterprint` following a plugin-initiated print.                            |
+| `paperstamp:exportResult`  | `{ layoutDef }`                                                         | Reply to `paperstamp:export`.                                                     |
+| `paperstamp:layoutDefs`    | `{ layouts: Record<string, LayoutDef> }`                                | Reply to `paperstamp:listLayoutDefs`.                                             |
+| `paperstamp:error`         | `{ code, message }`                                                     | Bad payload / missing layout / invalid layoutDef.                                 |
 
 Error codes
 
@@ -175,8 +175,6 @@ The plugin ships chrome-free; the designer is only loaded on explicit request vi
 
 ### 5.2 Instance methods
 
-| Method                                            | Purpose                                                                                             |
-| ------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --- | ------------------- | --------------------------------------------------------------------------------------- |
 | `lp.preview({ layoutDef, fieldValues? })`         | Render a layout into the plugin without printing (live preview).                                    |
 | `lp.print({ layoutDef, fieldValues?, options? })` | Stateless print. Preferred for cross-origin hosts.                                                  |
 | `lp.printById(layoutId, fieldValues?, options?)`  | Print a previously-saved/registered layout.                                                         |
