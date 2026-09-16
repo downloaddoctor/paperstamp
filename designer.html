@@ -1,0 +1,501 @@
+<body>
+  <template id="ps-designer-root">
+    <svg
+      id="psSprite"
+      width="0"
+      height="0"
+      aria-hidden="true"
+      style="position: absolute"
+    >
+      <defs>
+        <symbol id="i-save" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M7 3v4a1 1 0 0 0 1 1h7"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M3 6h18"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M10 11v6M14 11v6"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="i-page" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M14 2v5h6"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M8 13h8M8 17h5"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="i-image" viewBox="0 0 24 24" fill="none">
+          <rect
+            x="3"
+            y="3"
+            width="18"
+            height="18"
+            rx="2"
+            ry="2"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <circle
+            cx="9"
+            cy="9"
+            r="2"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="i-text" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M4 7V4h16v3M9 20h6M12 4v16"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="i-align-left" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M21 6H3M15 12H3M17 18H3"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="i-align-center" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M21 6H3M17 12H7M19 18H5"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="i-align-right" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M21 6H3M21 12H9M21 18H7"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="i-align-top" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M4 4h16M6 9h12M6 14h8"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="i-align-middle" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M4 12h16M6 7h12M6 17h8"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="i-align-bottom" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M4 20h16M6 15h12M6 10h8"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="i-export" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M12 3v12M12 15l-4-4M12 15l4-4"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="i-import" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M12 15V3M12 3l-4 4M12 3l4 4"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="i-print" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M6 9V2h12v7"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <rect
+            x="6"
+            y="14"
+            width="12"
+            height="8"
+            rx="1"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+      </defs>
+    </svg>
+
+    <div id="rightStack" role="toolbar" aria-label="Zoom and page setup">
+      <div id="zoomBar">
+        <button id="zoomOutBtn" title="Zoom out">&#8722;</button>
+        <span id="zoomPctLabel">Fit</span>
+        <button id="zoomInBtn" title="Zoom in">+</button>
+        <button id="zoom100Btn" title="Reset to 100%">100%</button>
+        <button id="zoomFitBtn" title="Fit to screen">Fit</button>
+      </div>
+      <div id="pageSetupBar">
+        <button
+          class="rail-btn"
+          id="railPage"
+          data-panel="pagePanel"
+          title="Page setup"
+        >
+          <svg class="icon"><use href="#i-page" /></svg>
+        </button>
+        <button
+          class="rail-btn"
+          id="railGuide"
+          data-panel="guidePanel"
+          title="Guide image"
+        >
+          <svg class="icon"><use href="#i-image" /></svg>
+        </button>
+      </div>
+      <div id="geomBar">
+        <div class="geom-row">
+          <label class="geom-label" for="itemX">X</label
+          ><input type="number" id="itemX" class="geom-input" step="0.1" />
+          <label class="geom-label" for="itemY">Y</label
+          ><input type="number" id="itemY" class="geom-input" step="0.1" />
+        </div>
+        <div class="geom-row">
+          <label class="geom-label" for="itemW">W</label
+          ><input type="number" id="itemW" class="geom-input" step="0.1" />
+          <label class="geom-label" for="itemH">H</label
+          ><input type="number" id="itemH" class="geom-input" step="0.1" />
+        </div>
+      </div>
+      <div
+        class="tool-popover"
+        id="pagePanel"
+        data-panel-for="railPage"
+        data-dock="stack"
+      >
+        <h4 class="popover-title">Page setup</h4>
+        <div class="field">
+          <label>Page size</label
+          ><select id="pageSize">
+            <option value="210x297">A4 (210 x 297 mm)</option>
+            <option value="215.9x279.4">Letter (8.5 x 11 in)</option>
+            <option value="215.9x355.6">Legal (8.5 x 14 in)</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div class="field" id="customSizeFields" style="display: none">
+          <label>Width (mm)</label
+          ><input type="number" id="customWidth" value="210" min="10" />
+          <label>Height (mm)</label
+          ><input type="number" id="customHeight" value="297" min="10" />
+        </div>
+        <div class="field">
+          <label>Orientation</label
+          ><select id="orientation">
+            <option value="portrait">Portrait</option>
+            <option value="landscape">Landscape</option>
+          </select>
+        </div>
+      </div>
+      <div
+        class="tool-popover"
+        id="guidePanel"
+        data-panel-for="railGuide"
+        data-dock="stack"
+      >
+        <h4 class="popover-title">Guide image</h4>
+        <div class="field">
+          <label>Reference only, won't print</label>
+          <label class="file-drop" for="guideUpload" id="fileDropLabel"
+            ><span class="file-drop-text" id="fileDropText"
+              >Click to upload image</span
+            ></label
+          >
+          <input
+            type="file"
+            id="guideUpload"
+            accept="image/*"
+            class="file-input-hidden"
+          />
+          <button id="clearGuide">Remove guide</button>
+        </div>
+        <div class="field">
+          <label>Guide opacity: <span id="opacityVal">60</span>%</label>
+          <input type="range" id="guideOpacity" min="0" max="100" value="60" />
+        </div>
+      </div>
+      <div class="tool-popover" id="fillPanel" data-dock="stack">
+        <h4 class="popover-title">Fill fields</h4>
+        <div id="fillFormList"></div>
+      </div>
+    </div>
+
+    <div id="bottomCenterBar">
+      <div id="layoutBar" role="toolbar" aria-label="Layout controls">
+        <div class="layout-combo">
+          <input
+            type="text"
+            id="layoutName"
+            class="layout-name-input"
+            placeholder="Layout name"
+          />
+          <button
+            id="layoutComboBtn"
+            class="layout-combo-btn"
+            title="Saved layouts"
+          >
+            &#9662;
+          </button>
+          <div id="layoutComboList" class="layout-combo-list"></div>
+        </div>
+        <div class="layout-divider"></div>
+        <button
+          id="saveLayout"
+          class="layout-btn layout-icon-btn"
+          title="Save layout"
+        >
+          <svg class="icon"><use href="#i-save" /></svg>
+        </button>
+        <button
+          id="deleteLayout"
+          class="layout-btn layout-icon-btn"
+          title="Delete layout"
+        >
+          <svg class="icon"><use href="#i-trash" /></svg>
+        </button>
+        <div class="layout-divider"></div>
+        <button
+          id="exportLayout"
+          class="layout-btn layout-icon-btn"
+          title="Export layout as JSON"
+        >
+          <svg class="icon"><use href="#i-export" /></svg>
+        </button>
+        <button
+          id="importLayoutBtn"
+          class="layout-btn layout-icon-btn"
+          title="Import layout from JSON"
+        >
+          <svg class="icon"><use href="#i-import" /></svg>
+        </button>
+        <input
+          type="file"
+          id="importLayoutFile"
+          accept="application/json"
+          class="file-input-hidden"
+        />
+        <select id="layoutSelect" class="layout-select" hidden>
+          <option value="">-- saved --</option>
+        </select>
+      </div>
+      <div id="modePill" role="tablist" aria-label="Editor mode">
+        <button
+          id="modeDesignBtn"
+          class="mode-btn active"
+          role="tab"
+          aria-selected="true"
+        >
+          Design
+        </button>
+        <button
+          id="modeFillBtn"
+          class="mode-btn"
+          role="tab"
+          aria-selected="false"
+        >
+          Fill &amp; Print
+        </button>
+      </div>
+    </div>
+
+    <div id="bottomRightBar">
+      <button id="printBtn" class="print-text-btn">
+        <svg class="icon"><use href="#i-print" /></svg><span>Print</span>
+      </button>
+    </div>
+
+    <div id="toolRail" role="toolbar" aria-label="Item tools">
+      <button class="rail-btn" id="railAddText" title="Add text">
+        <svg class="icon"><use href="#i-text" /></svg>
+      </button>
+      <button class="rail-btn" id="railClearAll" title="Clear all items">
+        <svg class="icon"><use href="#i-trash" /></svg>
+      </button>
+    </div>
+
+    <div class="item-toolbar" id="itemToolbar">
+      <input
+        type="text"
+        id="itemName"
+        class="toolbar-input"
+        placeholder="Field name"
+      />
+      <div class="toolbar-sep"></div>
+      <input
+        type="number"
+        id="fontSize"
+        class="toolbar-number"
+        value="12"
+        min="6"
+        max="120"
+        title="Font size (pt)"
+      />
+      <div class="toolbar-align-group" id="textAlignGroup">
+        <button
+          class="toolbar-icon-btn align-btn active"
+          data-align="left"
+          title="Align left"
+        >
+          <svg class="icon"><use href="#i-align-left" /></svg>
+        </button>
+        <button
+          class="toolbar-icon-btn align-btn"
+          data-align="center"
+          title="Align center"
+        >
+          <svg class="icon"><use href="#i-align-center" /></svg>
+        </button>
+        <button
+          class="toolbar-icon-btn align-btn"
+          data-align="right"
+          title="Align right"
+        >
+          <svg class="icon"><use href="#i-align-right" /></svg>
+        </button>
+      </div>
+      <div class="toolbar-sep"></div>
+      <div class="toolbar-align-group" id="vertAlignGroup">
+        <button
+          class="toolbar-icon-btn align-btn active"
+          data-valign="top"
+          title="Align top"
+        >
+          <svg class="icon"><use href="#i-align-top" /></svg>
+        </button>
+        <button
+          class="toolbar-icon-btn align-btn"
+          data-valign="middle"
+          title="Align middle"
+        >
+          <svg class="icon"><use href="#i-align-middle" /></svg>
+        </button>
+        <button
+          class="toolbar-icon-btn align-btn"
+          data-valign="bottom"
+          title="Align bottom"
+        >
+          <svg class="icon"><use href="#i-align-bottom" /></svg>
+        </button>
+      </div>
+      <div class="toolbar-sep"></div>
+      <button id="deleteItem" class="toolbar-icon-btn" title="Delete item">
+        <svg class="icon"><use href="#i-trash" /></svg>
+      </button>
+    </div>
+  </template>
+</body>

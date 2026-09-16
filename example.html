@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PaperStamp Plugin Demo</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      body {
+        font-family: system-ui, sans-serif;
+        color: #1a1d29;
+        display: flex;
+      }
+      #controls {
+        width: 50%;
+        height: 100%;
+        overflow: auto;
+        padding: 32px 28px;
+        border-right: 1px solid #e4e6ec;
+      }
+      #preview {
+        width: 50%;
+        height: 100%;
+        position: relative;
+        background: #f5f6f9;
+        overflow: hidden;
+      }
+      #preview iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0 0 8px;
+      }
+      p.lead {
+        color: #5b6072;
+        margin: 0 0 24px;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      .field {
+        margin-bottom: 14px;
+      }
+      .field label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        color: #5b6072;
+        margin-bottom: 6px;
+      }
+      input {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #d4d7e0;
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: inherit;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 20px 0;
+      }
+      button {
+        padding: 9px 16px;
+        border-radius: 6px;
+        border: 1px solid #d4d7e0;
+        background: #fff;
+        cursor: pointer;
+        font-size: 13px;
+        font-family: inherit;
+        font-weight: 500;
+      }
+      button:hover {
+        background: #f0f1f5;
+      }
+      button.primary {
+        background: #3454d1;
+        border-color: #3454d1;
+        color: #fff;
+      }
+      button.primary:hover {
+        background: #2a44b3;
+      }
+      h3 {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        color: #5b6072;
+        margin: 24px 0 8px;
+      }
+      pre {
+        background: #f8f9fb;
+        border: 1px solid #e4e6ec;
+        border-radius: 6px;
+        padding: 10px;
+        font-size: 12px;
+        line-height: 1.5;
+        overflow: auto;
+        max-height: 200px;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="controls">
+      <h1>PaperStamp Plugin Demo</h1>
+      <p class="lead">
+        The right pane is the live plugin. Editing a field re-renders the
+        preview instantly via <code>preview()</code>. Print buttons trigger a
+        real print job in the same iframe.
+      </p>
+
+      <div class="field">
+        <label for="name">Name</label>
+        <input id="name" value="Jane Doe" />
+      </div>
+      <div class="field">
+        <label for="address">Address</label>
+        <input id="address" value="123 Main St" />
+      </div>
+
+      <div class="actions">
+        <button id="printStateless" class="primary">Print stateless</button>
+        <button id="register">Register layout</button>
+        <button id="printById">Print by id</button>
+      </div>
+
+      <h3>Log</h3>
+      <pre id="log"></pre>
+    </div>
+
+    <div id="preview"></div>
+
+    <script src="sdk.js"></script>
+    <script>
+      const logEl = document.getElementById('log');
+      function log(msg) {
+        logEl.textContent += msg + '\n';
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      const sampleLayout = {
+        name: 'shipping-label',
+        pageWmm: 100,
+        pageHmm: 50,
+        orientation: 'landscape',
+        items: [
+          {
+            id: 1,
+            type: 'text',
+            x: 5,
+            y: 10,
+            w: 90,
+            h: 14,
+            text: 'Name',
+            name: 'name',
+            fontSize: 16,
+            align: 'left'
+          },
+          {
+            id: 2,
+            type: 'text',
+            x: 5,
+            y: 40,
+            w: 90,
+            h: 12,
+            text: 'Address',
+            name: 'address',
+            fontSize: 10,
+            align: 'left'
+          }
+        ]
+      };
+
+      const previewHost = document.getElementById('preview');
+
+      const lp = PaperStamp.embed({
+        container: previewHost,
+        width: '100%',
+        height: '100%',
+        autoShow: false,
+        onReady: function (info) {
+          log(
+            'ready v' +
+              info.version +
+              ', layouts=' +
+              JSON.stringify(info.layouts)
+          );
+          pushPreview();
+        },
+        onDone: function (job) {
+          log('done ' + JSON.stringify(job));
+        },
+        onError: function (err) {
+          log('error ' + err.code + ': ' + err.message);
+        }
+      });
+
+      function currentFieldValues() {
+        return {
+          name: document.getElementById('name').value,
+          address: document.getElementById('address').value
+        };
+      }
+
+      let previewTimer = null;
+      function pushPreview() {
+        clearTimeout(previewTimer);
+        previewTimer = setTimeout(function () {
+          lp.preview({
+            layoutDef: sampleLayout,
+            fieldValues: currentFieldValues()
+          });
+        }, 80);
+      }
+
+      document.getElementById('name').addEventListener('input', pushPreview);
+      document.getElementById('address').addEventListener('input', pushPreview);
+
+      document
+        .getElementById('printStateless')
+        .addEventListener('click', function () {
+          log('print stateless: ' + document.getElementById('name').value);
+          lp.print({
+            layoutDef: sampleLayout,
+            fieldValues: currentFieldValues()
+          });
+        });
+
+      document
+        .getElementById('register')
+        .addEventListener('click', function () {
+          log('register: ' + sampleLayout.name);
+          lp.register(sampleLayout);
+        });
+
+      document
+        .getElementById('printById')
+        .addEventListener('click', function () {
+          log('print by id: ' + document.getElementById('name').value);
+          lp.printById(sampleLayout.name, currentFieldValues());
+        });
+    </script>
+  </body>
+</html>

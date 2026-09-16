@@ -1,0 +1,801 @@
+/* PaperStamp designer chrome — loaded on demand with designer.js */
+
+/* ---------- Designer chrome container (injected into #stage) ---------- */
+
+#psDesignerChrome {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 55;
+}
+
+#psDesignerChrome > * {
+  pointer-events: auto;
+}
+
+/* ---------- Right stack (zoom / page-setup / geom / popovers) ---------- */
+
+#rightStack {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  max-height: calc(100% - 48px);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+  pointer-events: none;
+}
+
+#rightStack > * {
+  position: static;
+  pointer-events: auto;
+}
+
+#rightStack.popover-open #geomBar {
+  display: none !important;
+}
+
+#zoomBar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px;
+  box-shadow: var(--shadow-md);
+}
+
+#zoomBar button {
+  min-width: 32px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--ink-soft);
+  line-height: 1;
+  padding: 0 10px;
+  transition: background 0.15s ease;
+}
+
+#zoomBar button:hover {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+
+#zoomPctLabel {
+  min-width: 46px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--surface-muted);
+  border-radius: 6px;
+  padding: 6px 0;
+  user-select: none;
+}
+
+/* ---------- Top bar ---------- */
+
+#layoutBar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px;
+  box-shadow: var(--shadow-md);
+}
+
+.layout-combo {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.layout-combo-btn {
+  padding: 6px 7px;
+  border: none;
+  border-left: 1px solid var(--border);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--surface-muted);
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1;
+  transition: background 0.15s ease;
+}
+
+.layout-combo-btn:hover {
+  background: var(--surface-hover);
+}
+
+.layout-combo .layout-name-input {
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.layout-combo-list {
+  position: absolute;
+  bottom: calc(100% + 16px);
+  left: 0;
+  min-width: 100%;
+  max-height: 220px;
+  overflow-y: auto;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px;
+  box-shadow: 0 -12px 32px rgba(20, 22, 35, 0.12);
+  z-index: 70;
+}
+
+.layout-combo-list.open {
+  display: flex;
+}
+
+.layout-combo-list button {
+  padding: 7px 9px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12.5px;
+  font-family: inherit;
+  color: var(--ink);
+  text-align: left;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.layout-combo-list button:hover {
+  background: var(--surface-hover);
+}
+
+.layout-combo-list .layout-combo-empty {
+  padding: 7px 9px;
+  font-size: 12px;
+  color: #888;
+}
+
+.layout-name-input {
+  width: 130px;
+  padding: 6px 9px;
+  border: none;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  background: var(--surface-muted);
+  font-size: 12.5px;
+  font-family: inherit;
+  color: var(--ink);
+}
+
+.layout-name-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.layout-select {
+  max-width: 130px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  font-size: 12.5px;
+  font-family: inherit;
+  color: var(--ink);
+}
+
+.layout-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+.layout-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.layout-btn:hover {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+.layout-icon-btn {
+  padding: 0;
+  width: 30px;
+}
+
+.icon {
+  width: 16px;
+  height: 16px;
+  display: block;
+  color: currentColor;
+}
+
+/* ---------- Page setup + tool rail ---------- */
+
+#pageSetupBar {
+  display: flex;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px;
+  box-shadow: var(--shadow-md);
+}
+
+.rail-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.rail-btn:hover {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+.rail-btn.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+#toolRail {
+  position: fixed;
+  top: 50%;
+  right: 24px;
+  transform: translateY(-50%);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px;
+  box-shadow: var(--shadow-md);
+}
+
+/* ---------- Geometry bar ---------- */
+
+#geomBar {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  position: fixed;
+  z-index: 65;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px;
+  box-shadow: var(--shadow-md);
+}
+
+#geomBar.open {
+  display: flex;
+}
+
+.geom-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.geom-label {
+  width: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+.geom-input {
+  width: 60px;
+  padding: 5px 7px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--ink);
+}
+
+.geom-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* ---------- Popovers ---------- */
+
+.tool-popover {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  width: 240px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: var(--shadow-lg);
+  z-index: 60;
+}
+
+.tool-popover.open {
+  display: flex;
+}
+
+#rightStack .tool-popover {
+  position: static;
+}
+
+#rightStack #geomBar {
+  position: static;
+}
+
+.tool-popover .popover-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ink-soft);
+}
+
+.tool-popover .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tool-popover .field label {
+  font-size: 12px;
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.tool-popover select,
+.tool-popover input[type='number'],
+.tool-popover input[type='text'] {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  font-family: inherit;
+  color: var(--ink);
+}
+
+.tool-popover select:focus,
+.tool-popover input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.tool-popover .field button {
+  padding: 7px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 12.5px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.tool-popover .field button:hover {
+  background: var(--surface-hover);
+}
+
+.file-input-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.file-drop {
+  display: block;
+  text-align: center;
+  padding: 18px 10px;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.file-drop:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* ---------- Bottom bars ---------- */
+
+#bottomCenterBar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+#modePill {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px;
+  box-shadow: var(--shadow-md);
+}
+
+.mode-btn {
+  height: 30px;
+  padding: 0 16px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  color: var(--ink-soft);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.mode-btn:hover {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+.mode-btn.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+#bottomRightBar {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 55;
+}
+
+.print-text-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 20px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: background 0.15s ease;
+}
+
+.print-text-btn:hover {
+  background: var(--accent-hover);
+}
+
+/* ---------- Item toolbar ---------- */
+
+.item-toolbar {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  position: fixed;
+  z-index: 65;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px;
+  box-shadow: var(--shadow-lg);
+}
+
+.item-toolbar.open {
+  display: flex;
+}
+
+.toolbar-input {
+  width: 130px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  font-family: inherit;
+  color: var(--ink);
+}
+
+.toolbar-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.toolbar-number {
+  width: 56px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  font-family: inherit;
+  color: var(--ink);
+}
+
+.toolbar-sep {
+  width: 1px;
+  height: 22px;
+  background: var(--border);
+}
+.toolbar-align-group {
+  display: flex;
+  gap: 2px;
+}
+
+.toolbar-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.toolbar-icon-btn:hover {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+.align-btn.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* ---------- Item badges ---------- */
+
+.item-badge {
+  position: absolute;
+  z-index: 65;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  pointer-events: none;
+  transform: translate(-50%, 0);
+  white-space: nowrap;
+}
+
+.item-badge-h {
+  transform: translate(0, -50%);
+}
+
+/* ---------- Focus + a11y ---------- */
+
+#layoutBar:focus-within,
+#rightStack:focus-within,
+#bottomCenterBar:focus-within,
+#bottomRightBar:focus-within,
+#toolRail:focus-within,
+.item-toolbar:focus-within,
+.tool-popover:focus-within {
+  outline: none;
+}
+
+.rail-btn:focus-visible,
+.layout-btn:focus-visible,
+.mode-btn:focus-visible,
+.toolbar-icon-btn:focus-visible,
+.print-text-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Fill panel ---------- */
+
+#fillPanel {
+  width: 280px;
+}
+#fillFormList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+.fill-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.fill-field label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.fill-field input {
+  padding: 7px 9px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  font-family: inherit;
+  color: var(--ink);
+}
+
+.fill-field input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+#fillFormList .hint {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  margin: 0;
+}
+
+/* ---------- Toast + confirm ---------- */
+
+.ps-toast {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translate(-50%, -16px);
+  z-index: 120;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: #fff;
+  font-size: 13px;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.ps-toast.open {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.ps-confirm-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 22, 35, 0.45);
+}
+
+.ps-confirm-overlay.open {
+  display: flex;
+}
+
+.ps-confirm-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  box-shadow: var(--shadow-lg);
+  min-width: 280px;
+}
+
+.ps-confirm-msg {
+  margin: 0 0 16px;
+  font-size: 13.5px;
+  color: var(--ink);
+}
+.ps-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.ps-confirm-actions button {
+  padding: 7px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.ps-confirm-actions button:hover {
+  background: var(--surface-hover);
+}
+
+.ps-confirm-actions .ps-confirm-ok {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.ps-confirm-actions .ps-confirm-ok:hover {
+  background: var(--accent-hover);
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 720px) {
+  #rightStack {
+    right: 14px;
+    top: 14px;
+  }
+  #toolRail {
+    right: 14px;
+  }
+  #bottomRightBar {
+    right: 14px;
+    bottom: 14px;
+  }
+  #bottomCenterBar {
+    bottom: 14px;
+  }
+}

@@ -1,0 +1,300 @@
+/* PaperStamp base styles — preview + print only.
+   Designer chrome lives in designer.css (lazy-loaded). */
+
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --ink: #1a1d29;
+  --ink-soft: #5b6072;
+  --ink-faint: #9296a6;
+  --border: #e4e6ec;
+  --border-strong: #d4d7e0;
+  --surface: #ffffff;
+  --surface-muted: #f8f9fb;
+  --surface-hover: #f0f1f5;
+  --accent: #3454d1;
+  --accent-hover: #2a44b3;
+  --accent-soft: #eef1fd;
+  --radius: 10px;
+  --radius-sm: 7px;
+  --shadow-sm: 0 1px 2px rgba(20, 22, 35, 0.06);
+  --shadow-md: 0 4px 16px rgba(20, 22, 35, 0.08);
+  --shadow-lg: 0 12px 32px rgba(20, 22, 35, 0.12);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  background: #f5f6f9;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* body.silent-mode is applied when a layout is applied without designer chrome. */
+
+body.silent-mode #modePill,
+body.silent-mode #zoomBar,
+body.silent-mode #toolRail,
+body.silent-mode .tool-popover {
+  display: none !important;
+}
+
+/* ---------- Embed mode (?embed=1) ---------- */
+
+body.embed-mode #layoutBar,
+body.embed-mode #zoomBar,
+body.embed-mode #pageSetupBar,
+body.embed-mode #geomBar,
+body.embed-mode #toolRail,
+body.embed-mode #bottomCenterBar,
+body.embed-mode #bottomRightBar,
+body.embed-mode .tool-popover,
+body.embed-mode #itemToolbar,
+body.embed-mode .item-badge {
+  display: none !important;
+}
+
+body.embed-mode #stage {
+  padding: 0;
+  background: #ffffff;
+  background-image: none;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Blank until host handshake completes. */
+body.embed-mode:not(.paperstamp-ready) #pageViewport {
+  visibility: hidden;
+}
+body.embed-mode:not(.paperstamp-ready) #stage {
+  background: #ffffff;
+  background-image: none;
+}
+
+/* Designer mode overrides embed hiding when the designer is loaded. */
+body.designer-mode.embed-mode #layoutBar,
+body.designer-mode.embed-mode #zoomBar,
+body.designer-mode.embed-mode #pageSetupBar,
+body.designer-mode.embed-mode #geomBar,
+body.designer-mode.embed-mode #toolRail,
+body.designer-mode.embed-mode #bottomCenterBar,
+body.designer-mode.embed-mode #bottomRightBar,
+body.designer-mode.embed-mode .tool-popover,
+body.designer-mode.embed-mode #itemToolbar,
+body.designer-mode.embed-mode .item-badge {
+  display: revert;
+}
+
+body.designer-mode.embed-mode #toolRail {
+  display: flex !important;
+}
+body.designer-mode.embed-mode #bottomCenterBar,
+body.designer-mode.embed-mode #bottomRightBar {
+  display: block !important;
+}
+body.designer-mode.embed-mode #rightStack {
+  display: flex !important;
+}
+body.designer-mode.embed-mode #layoutBar {
+  display: flex !important;
+}
+body.designer-mode.embed-mode .item-toolbar.open {
+  display: flex !important;
+}
+body.designer-mode.embed-mode .tool-popover.open {
+  display: block !important;
+}
+body.designer-mode.embed-mode #geomBar.open {
+  display: flex !important;
+}
+body.designer-mode.embed-mode .item-badge:not([hidden]) {
+  display: block !important;
+}
+
+/* ---------- Stage ---------- */
+
+#stage {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100vh;
+  overflow: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px;
+  position: relative;
+  background: #f5f6f9;
+  background-image: radial-gradient(circle, #e7e9ef 1px, transparent 1px);
+  background-size: 20px 20px;
+  scrollbar-width: thin;
+  scrollbar-color: #c7cad3 transparent;
+  cursor: grab;
+}
+
+#stage.panning {
+  cursor: grabbing;
+  user-select: none;
+}
+
+#stage::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+#stage::-webkit-scrollbar-track {
+  background: transparent;
+}
+#stage::-webkit-scrollbar-thumb {
+  background-color: #c7cad3;
+  border-radius: 8px;
+  border: 3px solid #f5f6f9;
+}
+#stage::-webkit-scrollbar-thumb:hover {
+  background-color: #a7abb8;
+}
+#stage::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+@media (max-width: 720px) {
+  #stage {
+    padding: 24px 16px;
+  }
+  body.designer-mode #stage {
+    padding-top: 84px;
+  }
+}
+
+#pageViewport {
+  position: relative;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+#page {
+  position: relative;
+  background: #ffffff;
+  box-shadow: var(--shadow-lg);
+  border-radius: 2px;
+  overflow: hidden;
+  transform-origin: top left;
+}
+
+#guideImg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  user-select: none;
+  display: none;
+}
+
+/* ---------- Items ---------- */
+
+.item {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  padding: 1px 3px;
+  cursor: move;
+  user-select: none;
+  color: #111;
+  line-height: 1.15;
+  overflow: hidden;
+  word-break: break-word;
+  outline: none;
+}
+
+.item.text-item {
+  white-space: pre-wrap;
+}
+
+.item.selected {
+  outline: 1.5px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.item[contenteditable='true'] {
+  cursor: text;
+  outline: 1.5px solid var(--accent);
+  background: rgba(52, 84, 209, 0.04);
+}
+
+.resize-handle {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  width: 10px;
+  height: 10px;
+  background: var(--accent);
+  border: 1.5px solid #fff;
+  border-radius: 2px;
+  cursor: nwse-resize;
+  display: none;
+}
+
+.item.selected .resize-handle {
+  display: block;
+}
+
+/* ---------- Print ---------- */
+
+@media print {
+  #layoutBar,
+  #zoomBar,
+  #pageSetupBar,
+  #geomBar,
+  #toolRail,
+  #bottomRightBar,
+  #bottomCenterBar,
+  #itemToolbar,
+  .item-badge,
+  .tool-popover,
+  .ps-toast,
+  .ps-confirm-overlay {
+    display: none !important;
+  }
+  #stage {
+    padding: 0 !important;
+    background: #ffffff !important;
+    background-image: none !important;
+    overflow: visible !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+  }
+
+  #pageViewport {
+    width: auto !important;
+    height: auto !important;
+  }
+  #page {
+    transform: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+  #guideImg {
+    display: none !important;
+  }
+
+  .item {
+    cursor: default;
+  }
+  .resize-handle {
+    display: none !important;
+  }
+  .item.selected {
+    outline: none !important;
+  }
+}
