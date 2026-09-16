@@ -55,18 +55,23 @@ body.silent-mode .tool-popover {
   box-sizing: border-box;
   width: 100%;
   height: 100vh;
-  overflow: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 48px;
+  overflow: hidden;
   position: relative;
   background: #f5f6f9;
   background-image: radial-gradient(circle, #e7e9ef 1px, transparent 1px);
   background-size: 20px 20px;
+  cursor: grab;
+}
+
+/* Non-designer mode (embed/print) keeps the bounded, centered look. */
+body:not(.designer-mode) #stage {
+  overflow: auto;
+  display: flex;
+  align-items: safe center;
+  justify-content: safe center;
+  padding: 48px;
   scrollbar-width: thin;
   scrollbar-color: #c7cad3 transparent;
-  cursor: grab;
 }
 
 #stage.panning {
@@ -94,18 +99,41 @@ body.silent-mode .tool-popover {
 }
 
 @media (max-width: 720px) {
-  #stage {
+  body:not(.designer-mode) #stage {
     padding: 24px 16px;
-  }
-  body.designer-mode #stage {
-    padding-top: 84px;
   }
 }
 
+/* Designer mode: #pageViewport is the infinite-canvas transform target.
+   In embed/print mode it's a plain centered block (see flex on #stage). */
+
 #pageViewport {
   position: relative;
-  flex-shrink: 0;
   overflow: visible;
+}
+
+body:not(.designer-mode) #pageViewport {
+  flex-shrink: 0;
+}
+
+body.designer-mode #pageViewport {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  overflow: visible;
+}
+
+/* In designer mode #page is positioned & sized in CSS px directly
+   (mm -> px at the current zoom). No transform, so text is rendered
+   at its true pixel size and stays crisp at any zoom. */
+body.designer-mode #page {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: none;
+  will-change: width, height, left, top;
 }
 
 #page {
@@ -180,6 +208,14 @@ body.silent-mode .tool-popover {
 /* ---------- Print ---------- */
 
 @media print {
+  /* Reset #page to physical mm size — overrides the designer-mode px sizing. */
+  #page {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: var(--ps-page-w, auto) !important;
+    height: var(--ps-page-h, auto) !important;
+  }
   #layoutBar,
   #zoomBar,
   #pageSetupBar,
@@ -199,11 +235,11 @@ body.silent-mode .tool-popover {
     background: #ffffff !important;
     background-image: none !important;
     overflow: visible !important;
-    align-items: flex-start !important;
-    justify-content: flex-start !important;
   }
 
   #pageViewport {
+    position: static !important;
+    transform: none !important;
     width: auto !important;
     height: auto !important;
   }

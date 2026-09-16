@@ -32,8 +32,119 @@
   } = core;
 
   const ZOOM_STEP = 0.1;
-  const ZOOM_MIN = 0.25;
-  const ZOOM_MAX = 3;
+  const ZOOM_MIN = 0.1;
+  const ZOOM_MAX = 5;
+
+  /* ---------- Infinite-canvas input (designer-only) ---------- */
+
+  function installCanvasInput() {
+    const stage = el.stage;
+    if (!stage) return;
+
+    core.setInfiniteCanvas(true);
+
+    let panState = null;
+    let spaceDown = false;
+    const isBackground = (t) =>
+      t === stage ||
+      t === el.pageViewport ||
+      t === el.page ||
+      t === el.guideImg;
+    const isPanButton = (e) => e.button === 1 || (e.button === 0 && spaceDown);
+    const canLeftDragPan = (e) => e.button === 0 && isBackground(e.target);
+
+    function startPan(e) {
+      panState = {
+        x: e.clientX,
+        y: e.clientY,
+        panX: state.panX,
+        panY: state.panY
+      };
+      stage.classList.add('panning');
+      if (stage.setPointerCapture)
+        try {
+          stage.setPointerCapture(e.pointerId);
+        } catch (_) {}
+    }
+
+    function onPointerDown(e) {
+      /* Middle mouse or Space+left anywhere on stage → pan. */
+      if (isPanButton(e)) {
+        e.preventDefault();
+        startPan(e);
+        return;
+      }
+      /* Left-drag on empty background → pan (designer-mode default). */
+      if (canLeftDragPan(e)) startPan(e);
+    }
+
+    function onPointerMove(e) {
+      if (!panState) return;
+      core.setPan(
+        panState.panX + (e.clientX - panState.x),
+        panState.panY + (e.clientY - panState.y)
+      );
+    }
+
+    function onPointerUp() {
+      if (!panState) return;
+      panState = null;
+      stage.classList.remove('panning');
+    }
+
+    function onWheel(e) {
+      /* Ctrl/Cmd + wheel → pointer-anchored zoom. */
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const r = stage.getBoundingClientRect();
+        const cx = e.clientX - r.left;
+        const cy = e.clientY - r.top;
+        const base =
+          state.zoomMode === 'fit' ? state.zoomScale : state.zoomScale;
+        const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+        core.zoomAt(cx, cy, base * factor);
+        return;
+      }
+      /* Plain wheel → pan vertical. Shift+wheel → pan horizontal. */
+      e.preventDefault();
+      if (e.shiftKey) core.panBy(-e.deltaY, 0);
+      else core.panBy(-e.deltaX, -e.deltaY);
+    }
+
+    function onKeyDown(e) {
+      if (e.code === 'Space' && !e.repeat) {
+        spaceDown = true;
+        stage.style.cursor = 'grabbing';
+      }
+    }
+    function onKeyUp(e) {
+      if (e.code === 'Space') {
+        spaceDown = false;
+        stage.style.cursor = '';
+      }
+    }
+
+    stage.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+    stage.addEventListener('wheel', onWheel, { passive: false });
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+
+    el._canvasInput = {
+      teardown() {
+        stage.removeEventListener('pointerdown', onPointerDown);
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+        window.removeEventListener('pointercancel', onPointerUp);
+        stage.removeEventListener('wheel', onWheel);
+        window.removeEventListener('keydown', onKeyDown);
+        window.removeEventListener('keyup', onKeyUp);
+        stage.style.cursor = '';
+      }
+    };
+  }
 
   let toastTimer = null;
   function notify(message) {
@@ -187,8 +298,9 @@
     el.hBadge.className = 'item-badge item-badge-h';
     el.hBadge.hidden = true;
     el.hBadge.setAttribute('data-paperstamp-designer', '1');
-    el.pageViewport.appendChild(el.wBadge);
-    el.pageViewport.appendChild(el.hBadge);
+    /* Fixed in viewport space so badges never scale with the page. */
+    document.body.appendChild(el.wBadge);
+    document.body.appendChild(el.hBadge);
   }
 
   /* ---------- State <-> DOM sync ---------- */
@@ -323,20 +435,18 @@
       hideItemBadge();
       return;
     }
-    const nodeRect = node.getBoundingClientRect();
-    const viewRect = el.pageViewport.getBoundingClientRect();
+    /* Badges are position:fixed — position in viewport space from the
+       item's real on-screen rect. The -50% transforms in .item-badge
+       handle centering, so we only supply viewport coordinates. */
+    const r = node.getBoundingClientRect();
     el.wBadge.hidden = false;
     el.wBadge.textContent = round1(item.w);
-    const dpr = window.devicePixelRatio || 1;
-    const snap = (v) => Math.round(v * dpr) / dpr;
-    el.wBadge.style.top = snap(nodeRect.bottom - viewRect.top + 6) + 'px';
-    el.wBadge.style.left =
-      snap(nodeRect.left - viewRect.left + nodeRect.width / 2) + 'px';
+    el.wBadge.style.top = r.bottom + 6 + 'px';
+    el.wBadge.style.left = r.left + r.width / 2 + 'px';
     el.hBadge.hidden = false;
     el.hBadge.textContent = round1(item.h);
-    el.hBadge.style.top =
-      snap(nodeRect.top - viewRect.top + nodeRect.height / 2) + 'px';
-    el.hBadge.style.left = snap(nodeRect.right - viewRect.left + 6) + 'px';
+    el.hBadge.style.top = r.top + r.height / 2 + 'px';
+    el.hBadge.style.left = r.right + 6 + 'px';
   }
   function selectItem(id) {
     state.selectedId = id;
@@ -722,21 +832,8 @@
     itemHooks.onDblClick = (e, item, node) => {
       if (state.mode !== 'fill') startEdit(node, item);
     };
-    /* Keep floating chrome glued to the selected item while the stage scrolls. */
-    if (el.stage) {
-      if (el._scrollHandler)
-        el.stage.removeEventListener('scroll', el._scrollHandler);
-      el._scrollHandler = () => {
-        if (state.selectedId == null) return;
-        const item = findItem(state.selectedId);
-        const node = getItemNode(state.selectedId);
-        if (!item || !node) return;
-        if (el.itemToolbar.classList.contains('open'))
-          positionItemToolbar(node);
-        positionItemBadge(item, node);
-      };
-      el.stage.addEventListener('scroll', el._scrollHandler);
-    }
+    /* Chrome repositioning on pan/zoom is handled by the module-scope
+       core.onEvent('fit', ...) listener above — nothing to install here. */
   }
 
   /* ---------- Event wiring ---------- */
@@ -985,25 +1082,27 @@
   async function init() {
     if (document.querySelector('#psDesignerChrome')) return;
     await buildDom();
+    document.body.classList.add('designer-mode');
+    installCanvasInput();
     installItemHooks();
     wireEvents();
     populateLayoutSelect();
     syncPageSetupInputs();
     render();
     fitPageToStage();
-    document.body.classList.add('designer-mode');
     core.emit('designer:ready', {});
     core.emit('designer:mounted', {});
   }
 
   core.onEvent('designer:close', () => {
+    if (el._canvasInput) {
+      el._canvasInput.teardown();
+      el._canvasInput = null;
+    }
+    core.setInfiniteCanvas(false);
     document
       .querySelectorAll('[data-paperstamp-designer]')
       .forEach((n) => n.remove());
-    if (el.stage && el._scrollHandler) {
-      el.stage.removeEventListener('scroll', el._scrollHandler);
-      el._scrollHandler = null;
-    }
     document.body.classList.remove('designer-mode');
     core.emit('designer:closed', {});
   });

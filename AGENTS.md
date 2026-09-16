@@ -26,12 +26,23 @@ no auto-close: plugin never calls window.close() (host owns iframe lifecycle)
 
 # MODULES
 core.js
--> state{items[], nextId, pageWmm, pageHmm, orientation, guideSrc, guideOpacity, selectedId, mode, zoomMode, zoomScale}
+-> state{items[], nextId, pageWmm, pageHmm, orientation, guideSrc, guideOpacity, selectedId, mode, zoomMode, zoomScale, panX, panY, infiniteCanvas}
+-> zoom clamp ZOOM_MIN=0.1 .. ZOOM_MAX=5 (clampZoom); infinite canvas widens range vs legacy 0.25–3
 -> deepClone(obj) -> JSON round-trip; exposed on public API for shared snapshot/clone use
 -> render() rebuilds #page items from state.items, keeps #guideImg first; adds interactive hooks when itemHooks.interactive
 -> applyGuideToDom() paints state.guideSrc/guideOpacity onto #guideImg; used by applyLayoutToState + designer's syncGuideDom
 -> applyPageSize() sets #page mm size + injects @page rule; orientation swaps w/h
--> fitPageToStage() scales #page; emit('fit', {scale, mode})
+-> MM_TO_PX=96/25.4 + PT_TO_PX=96/72 constants; pagePxSize() -> natural (zoom=1) page size in CSS px
+-> applyPageSize() sets @page mm rule, --ps-page-w/h custom props (print reset), and routes #page sizing (mm in embed, px in infinite)
+-> applyPageGeometry() (infinite mode) sets #page width/height/left/top in px from pagePxSize * zoomScale + panX/panY; re-applies item font px; emits 'fit'
+-> applyItemFontPx(item, node) sets node font-size in px = item.fontSize * PT_TO_PX * zoomScale(infinite only)
+-> render() calls applyItemFontPx per item
+-> fitPageToStage() infinite: centerPage + applyPageGeometry; embed: #page transform scale + #pageViewport px size (unchanged from before)
+-> centerPage() centers the scaled page inside #stage (infinite mode only)
+-> setInfiniteCanvas(on) toggles infinite canvas; on=false clears #pageViewport transform + #page left/top + zeroes pan; then applyPageSize + fitPageToStage
+-> setPan(x,y) / panBy(dx,dy) mutate panX/panY + applyPageGeometry
+-> zoomAt(clientX, clientY, scale) pointer-anchored zoom; keeps page point under cursor fixed; sets zoomMode='manual'
+-> clientToPage(clientX, clientY) -> {x,y} in unscaled page-local px (inverse of the canvas transform)
 -> sanitizeLayoutDef()/sanitizeItem() validate+coerce host layoutDef; {ok:false, errors[]} on fail
 -> applyLayoutToState() applies def + fieldValues; also applies+paints guideSrc/guideOpacity if def carries them (host preview, previewById)
 -> applyValidatedLayoutToState() = sanitize + re-attach guide fields (sanitizeLayoutDef strips them) + apply
@@ -76,7 +87,7 @@ valign -> #vertAlignGroup (top|middle|bottom) -> node.style.justifyContent (main
 both -> node.style.textAlign via item.align (text justification for wrapped lines)
 layoutDef = {name?, pageWmm, pageHmm, orientation, items[]}
 localStorage 'paperstampLayouts' -> {[layoutId]: {pageWmm, pageHmm, orientation, items}}, keyed by layout name
-designer:close removes [data-paperstamp-designer] nodes + #psToast/#psConfirm, detaches el._scrollHandler, drops body.designer-mode
+designer:close runs el._canvasInput.teardown(), core.setInfiniteCanvas(false), removes [data-paperstamp-designer] nodes + #psToast/#psConfirm, drops body.designer-mode
 syncPageSetupInputs() reconciles pageSize/customW/customH/orientation inputs with state (called from init, loadLayout)
 syncGuideDom() reconciles guideImg/src/opacity + guideOpacity slider with state (called after guide mutations)
 wireEvents scopes rail-btn/tool-popover queries to el.chrome (#psDesignerChrome) to avoid host-page collisions
@@ -113,8 +124,9 @@ Fill & Print -> setMode('fill'): clears selection, hides item chrome, renders fi
 mode buttons stopPropagation so document click-close doesn't shut the panel
 
 # DESIGNER-CHROME-FLOAT
-item toolbar + geomBar + W/H badges are position:fixed, repositioned on select/drag/resize/scroll/fit(zoom)
-core 'fit' event -> designer repositions toolbar+geomBar+badges for selectedId (else chrome drifts on zoom)
+item toolbar + geomBar + W/H badges are position:fixed (viewport space, constant size regardless of zoom); badges are document.body children tagged [data-paperstamp-designer]
+positionItemBadge uses node.getBoundingClientRect() in viewport space; transform: translate(-50%,0) / translate(0,-50%) on .item-badge/.item-badge-h handle centering
+core 'fit' event (emitted on every pan/zoom/fit via applyPageGeometry) -> designer repositions toolbar+geomBar+badges for selectedId (else chrome drifts on pan/zoom)
 #geomBar inherits position:fixed; #rightStack #geomBar overrides to static (docked in right stack)
 mode pill (#modePill) styled like #zoomBar: radius/padding/border match; .mode-btn.active = accent-soft bg + accent ink
 
@@ -123,8 +135,13 @@ mode design|fill -> guards in onItemPointerDown/onResizePointerDown/dblclick
 geometry inputs -> clamp to page bounds, sync with drag/resize
 snap-to-center: within 1% of page center
 keys: Esc deselect/close, Ctrl+D dup, arrows nudge (0.2%), Del removes
-Ctrl/Cmd + wheel over #stage -> api.setZoomScale(base ± 0.05)
-#stage scroll -> repositions #itemToolbar + #wBadge/#hBadge for selected item
+infinite canvas (designer-only): #stage overflow:hidden; #pageViewport is a static anchor; #page is positioned via left/top and sized via px width/height at the current zoom (no transform-scale → text renders at true pixel size and stays crisp)
+zoom semantic: 100% = page at natural CSS px size (mm * 96/25.4); font = pt * 96/72 * zoom px; zoom range 0.1–5.0
+print: @media print resets #page to physical mm via --ps-page-w/--ps-page-h custom props (set in applyPageSize)
+pan inputs (designer): left-drag empty bg | middle-mouse drag | Space+left-drag | wheel = vertical pan | Shift+wheel = horizontal pan
+zoom inputs (designer): Ctrl/Cmd+wheel = pointer-anchored zoom via api.zoomAt; zoom buttons + Fit recenter page in infinite mode
+Fit button in infinite mode: computeFitScale -> centerPage -> applyCanvasTransform (keeps page clear of floating chrome via 120px x-pad / 48px top / 132px bottom insets)
+embed/sdk.html: no infinite canvas — #stage stays bounded-scroll with safe-center flex; setInfiniteCanvas(false) on designer:close restores it
 body.silent-mode -> hides modePill/zoomBar/toolRail/popovers (transient, set during silent print)
 body.designer-mode -> chrome visible; set by designer.js init(), removed on designer:close
 afterprint -> emitDone(); no window.close() — host owns iframe lifecycle

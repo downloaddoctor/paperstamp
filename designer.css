@@ -614,7 +614,7 @@
 /* ---------- Item badges ---------- */
 
 .item-badge {
-  position: absolute;
+  position: fixed;
   z-index: 65;
   padding: 2px 6px;
   border-radius: 4px;

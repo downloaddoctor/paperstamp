@@ -44,8 +44,17 @@
     selectedId: null,
     mode: 'design',
     zoomMode: 'fit',
-    zoomScale: 1
+    zoomScale: 1,
+    /* Infinite-canvas pan (designer mode only), in CSS px of #stage space. */
+    panX: 0,
+    panY: 0,
+    infiniteCanvas: false
   };
+  const ZOOM_MIN = 0.1;
+  const ZOOM_MAX = 5;
+  const clampZoom = (s) => Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, s));
+  const MM_TO_PX = 96 / 25.4;
+  const PT_TO_PX = 96 / 72;
 
   const el = {};
   ['page', 'pageViewport', 'stage', 'guideImg', 'pageSizeStyle'].forEach(
@@ -259,7 +268,8 @@
 
   /* ---------- Page size ---------- */
 
-  function applyPageSize() {
+  /* Physical page size in mm after orientation swap. */
+  function physicalMm() {
     let w = state.pageWmm,
       h = state.pageHmm;
     const swap =
@@ -270,11 +280,30 @@
       w = h;
       h = t;
     }
-    el.page.style.width = w + 'mm';
-    el.page.style.height = h + 'mm';
+    return { w, h };
+  }
+
+  /* Natural (zoom=1) page size in CSS px. */
+  function pagePxSize() {
+    const { w, h } = physicalMm();
+    return { w: w * MM_TO_PX, h: h * MM_TO_PX };
+  }
+
+  function applyPageSize() {
+    const { w, h } = physicalMm();
+    /* Custom props for the print reset in style.css. */
+    document.documentElement.style.setProperty('--ps-page-w', w + 'mm');
+    document.documentElement.style.setProperty('--ps-page-h', h + 'mm');
     el.pageSizeStyle.textContent =
       '@page { size: ' + w + 'mm ' + h + 'mm; margin: 0; }';
-    el.page.style.transform = 'none';
+    if (state.infiniteCanvas) {
+      /* Designer mode: #page is sized in px via applyPageGeometry. */
+      applyPageGeometry();
+    } else {
+      el.page.style.width = w + 'mm';
+      el.page.style.height = h + 'mm';
+      el.page.style.transform = 'none';
+    }
     if (fitRafPending) return;
     fitRafPending = true;
     requestAnimationFrame(() => {
@@ -283,34 +312,126 @@
     });
   }
 
+  /* Re-apply the on-screen px size + position of #page for the current
+     zoom/pan, and re-apply item font sizes so text renders at target px. */
+  function applyPageGeometry() {
+    if (!state.infiniteCanvas) return;
+    const { w, h } = pagePxSize();
+    const z = state.zoomScale;
+    el.page.style.width = w * z + 'px';
+    el.page.style.height = h * z + 'px';
+    el.page.style.left = state.panX + 'px';
+    el.page.style.top = state.panY + 'px';
+    el.page.style.transform = 'none';
+    for (const item of state.items) {
+      const node = getItemNode(item.id);
+      if (node) applyItemFontPx(item, node);
+    }
+    emit('fit', { scale: z, mode: state.zoomMode });
+  }
+
+  /* Font size in px at the current zoom, so text renders crisp. */
+  function applyItemFontPx(item, node) {
+    const z = state.infiniteCanvas ? state.zoomScale : 1;
+    node.style.fontSize = item.fontSize * PT_TO_PX * z + 'px';
+  }
+
   /* ---------- Zoom ---------- */
 
   let fitRafPending = false;
 
   function computeFitScale() {
-    const w = el.page.offsetWidth,
-      h = el.page.offsetHeight;
+    const { w, h } = pagePxSize();
     if (!w || !h) return 1;
-    const padX = document.body.classList.contains('designer-mode') ? 32 : 80;
-    const padTop = 48;
-    const padBottom = document.body.classList.contains('designer-mode')
-      ? 132
-      : 48;
+    const designer = document.body.classList.contains('designer-mode');
+    /* Insets keep the page clear of floating chrome in designer mode. */
+    const padX = designer ? 120 : 80;
+    const padTop = designer ? 48 : 48;
+    const padBottom = designer ? 132 : 48;
     const availW = Math.max(1, el.stage.clientWidth - padX);
     const availH = Math.max(1, el.stage.clientHeight - padTop - padBottom);
-    return Math.max(0.05, Math.min(1, availW / w, availH / h));
+    return Math.max(ZOOM_MIN, Math.min(1, availW / w, availH / h));
   }
+
+  /* Center the (scaled) page inside #stage in designer mode. */
+  function centerPage() {
+    if (!state.infiniteCanvas) return;
+    const { w, h } = pagePxSize();
+    const sw = el.stage.clientWidth,
+      sh = el.stage.clientHeight;
+    const s = state.zoomScale;
+    state.panX = Math.round((sw - w * s) / 2);
+    state.panY = Math.round((sh - h * s) / 2);
+  }
+
   function fitPageToStage() {
-    const w = el.page.offsetWidth,
-      h = el.page.offsetHeight;
-    if (!w || !h) return;
     const scale =
       state.zoomMode === 'fit' ? computeFitScale() : state.zoomScale;
     if (state.zoomMode === 'fit') state.zoomScale = scale;
-    el.page.style.transform = 'scale(' + scale + ')';
-    el.pageViewport.style.width = w * scale + 'px';
-    el.pageViewport.style.height = h * scale + 'px';
-    emit('fit', { scale, mode: state.zoomMode });
+    state.zoomScale = clampZoom(state.zoomScale);
+    if (state.infiniteCanvas) {
+      centerPage();
+      applyPageGeometry();
+      return;
+    }
+    /* Embed/print: bounded scroll behavior — page own transform only. */
+    const w = el.page.offsetWidth,
+      h = el.page.offsetHeight;
+    if (!w || !h) return;
+    el.page.style.transform = 'scale(' + state.zoomScale + ')';
+    el.pageViewport.style.width = w * state.zoomScale + 'px';
+    el.pageViewport.style.height = h * state.zoomScale + 'px';
+    emit('fit', { scale: state.zoomScale, mode: state.zoomMode });
+  }
+
+  /* ---------- Infinite-canvas API (designer-only) ---------- */
+
+  function setInfiniteCanvas(on) {
+    state.infiniteCanvas = !!on;
+    if (!on) {
+      el.pageViewport.style.transform = '';
+      el.page.style.left = '';
+      el.page.style.top = '';
+      state.panX = 0;
+      state.panY = 0;
+    }
+    applyPageSize();
+    fitPageToStage();
+  }
+
+  function setPan(x, y) {
+    state.panX = x;
+    state.panY = y;
+    applyPageGeometry();
+  }
+
+  function panBy(dx, dy) {
+    setPan(state.panX + dx, state.panY + dy);
+  }
+
+  /* Zoom around a viewport-space anchor (client coords relative to #stage).
+     Keeps the page point under the cursor fixed. */
+  function zoomAt(clientX, clientY, newScale) {
+    const s0 = state.zoomScale;
+    const s1 = clampZoom(newScale);
+    if (s1 === s0) return;
+    const rx = clientX - state.panX;
+    const ry = clientY - state.panY;
+    const k = s1 / s0;
+    state.zoomScale = s1;
+    state.zoomMode = 'manual';
+    state.panX = clientX - rx * k;
+    state.panY = clientY - ry * k;
+    applyPageGeometry();
+  }
+
+  /* Convert a client point to page-local coordinates (unscaled px). */
+  function clientToPage(clientX, clientY) {
+    const r = el.stage.getBoundingClientRect();
+    return {
+      x: (clientX - r.left - state.panX) / state.zoomScale,
+      y: (clientY - r.top - state.panY) / state.zoomScale
+    };
   }
 
   /* ---------- Render ---------- */
@@ -332,7 +453,7 @@
       node.style.top = item.y + '%';
       node.style.width = item.w + '%';
       node.style.height = item.h + '%';
-      node.style.fontSize = item.fontSize + 'pt';
+      applyItemFontPx(item, node);
       node.style.alignItems = ALIGN_TO_FLEX[item.align] || 'flex-start';
       node.style.justifyContent = VERT_TO_FLEX[item.valign] || 'flex-start';
       node.style.textAlign = item.align;
@@ -712,12 +833,18 @@
     /** @param {'fit'|'manual'} mode */
     setZoomMode(mode) {
       state.zoomMode = mode;
+      if (state.infiniteCanvas && mode === 'fit') {
+        fitPageToStage();
+        return;
+      }
+      if (state.infiniteCanvas) centerPage();
       fitPageToStage();
     },
-    /** @param {number} s zoom scale (clamped 0.25–3) */
+    /** @param {number} s zoom scale (clamped ZOOM_MIN-ZOOM_MAX) */
     setZoomScale(s) {
       state.zoomMode = 'manual';
-      state.zoomScale = Math.max(0.25, Math.min(3, s));
+      state.zoomScale = clampZoom(s);
+      if (state.infiniteCanvas) centerPage();
       fitPageToStage();
     },
     /** @param {number} d delta to add to current zoom */
@@ -726,6 +853,15 @@
         state.zoomMode === 'fit' ? computeFitScale() : state.zoomScale;
       api.setZoomScale(base + d);
     },
+    setInfiniteCanvas,
+    setPan,
+    panBy,
+    zoomAt,
+    clientToPage,
+    centerPage,
+    applyPageGeometry,
+    applyItemFontPx,
+    pagePxSize,
     applyLayoutToState,
     applyValidatedLayoutToState,
     applyGuideToDom,
@@ -775,7 +911,10 @@
   applyPageSize();
   render();
   fitPageToStage();
-  window.addEventListener('resize', fitPageToStage);
+  window.addEventListener('resize', () => {
+    if (state.infiniteCanvas) centerPage();
+    fitPageToStage();
+  });
 
   if (params.get('design') === '1') loadDesigner();
 
@@ -794,50 +933,6 @@
     printLayout(layoutId, fv, { silent: params.get('silent') !== '0' });
     revealPage();
   })();
-
-  /* ---------- Mouse zoom (Ctrl/Cmd + wheel) ---------- */
-
-  el.stage.addEventListener(
-    'wheel',
-    (e) => {
-      if (!e.ctrlKey && !e.metaKey) return;
-      e.preventDefault();
-      const base =
-        state.zoomMode === 'fit' ? computeFitScale() : state.zoomScale;
-      api.setZoomScale(base + (e.deltaY < 0 ? 0.05 : -0.05));
-    },
-    { passive: false }
-  );
-
-  /* ---------- Pan (click-drag empty canvas to navigate) ---------- */
-
-  let panState = null;
-  el.stage.addEventListener('pointerdown', (e) => {
-    if (e.button !== 0) return;
-    if (
-      e.target !== el.stage &&
-      e.target !== el.page &&
-      e.target !== el.guideImg
-    )
-      return;
-    panState = {
-      x: e.clientX,
-      y: e.clientY,
-      left: el.stage.scrollLeft,
-      top: el.stage.scrollTop
-    };
-    el.stage.classList.add('panning');
-  });
-  window.addEventListener('pointermove', (e) => {
-    if (!panState) return;
-    el.stage.scrollLeft = panState.left - (e.clientX - panState.x);
-    el.stage.scrollTop = panState.top - (e.clientY - panState.y);
-  });
-  window.addEventListener('pointerup', () => {
-    if (!panState) return;
-    panState = null;
-    el.stage.classList.remove('panning');
-  });
 
   requestAnimationFrame(() => requestAnimationFrame(emitReady));
 })();
