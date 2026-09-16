@@ -202,6 +202,22 @@
             stroke-linejoin="round"
           />
         </symbol>
+        <symbol id="i-pencil" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M12 20h9"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
         <symbol id="i-print" viewBox="0 0 24 24" fill="none">
           <path
             d="M6 9V2h12v7"
@@ -329,10 +345,11 @@
           <input type="range" id="guideOpacity" min="0" max="100" value="60" />
         </div>
       </div>
-      <div class="tool-popover" id="fillPanel" data-dock="stack">
-        <h4 class="popover-title">Fill fields</h4>
-        <div id="fillFormList"></div>
-      </div>
+    </div>
+
+    <div class="tool-popover" id="fillPanel">
+      <h4 class="popover-title">Fill fields</h4>
+      <div id="fillFormList"></div>
     </div>
 
     <div id="bottomCenterBar">
@@ -393,29 +410,19 @@
           <option value="">-- saved --</option>
         </select>
       </div>
-      <div id="modePill" role="tablist" aria-label="Editor mode">
-        <button
-          id="modeDesignBtn"
-          class="mode-btn active"
-          role="tab"
-          aria-selected="true"
-        >
-          Design
-        </button>
-        <button
-          id="modeFillBtn"
-          class="mode-btn"
-          role="tab"
-          aria-selected="false"
-        >
-          Fill &amp; Print
-        </button>
-      </div>
     </div>
 
     <div id="bottomRightBar">
-      <button id="printBtn" class="print-text-btn">
-        <svg class="icon"><use href="#i-print" /></svg><span>Print</span>
+      <button
+        id="fillToggleBtn"
+        class="icon-round-btn"
+        title="Fill fields"
+        aria-pressed="false"
+      >
+        <svg class="icon"><use href="#i-pencil" /></svg>
+      </button>
+      <button id="printBtn" class="icon-round-btn" title="Print">
+        <svg class="icon"><use href="#i-print" /></svg>
       </button>
     </div>
 

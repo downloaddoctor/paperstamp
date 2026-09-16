@@ -5,6 +5,20 @@
   box-sizing: border-box;
 }
 
+body {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Re-enable text selection in form controls and editable items. */
+input,
+textarea,
+select,
+body [contenteditable='true'] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 :root {
   --ink: #1a1d29;
   --ink-soft: #5b6072;

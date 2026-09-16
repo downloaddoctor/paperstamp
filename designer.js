@@ -269,8 +269,7 @@
       'fileDropText',
       'guideOpacity',
       'opacityVal',
-      'modeDesignBtn',
-      'modeFillBtn',
+      'fillToggleBtn',
       'printBtn',
       'railAddText',
       'railClearAll',
@@ -347,7 +346,32 @@
       .querySelectorAll('.rail-btn.active')
       .forEach((b) => b.classList.remove('active'));
     if (el.rightStack) el.rightStack.classList.remove('popover-open');
+    /* Any close path drops out of fill mode and resets the pencil toggle. */
+    state.mode = 'design';
+    if (el.fillToggleBtn) {
+      el.fillToggleBtn.classList.remove('active');
+      el.fillToggleBtn.setAttribute('aria-pressed', 'false');
+    }
   }
+  /* Anchor the fill panel above the pencil button (bottom-right). */
+  function positionFillPanel(panel) {
+    if (!panel || !el.fillToggleBtn) return;
+    const r = el.fillToggleBtn.getBoundingClientRect();
+    const p = panel.getBoundingClientRect();
+    const gap = 12;
+    /* Prefer right-aligned to the pencil, above it. */
+    let left = r.right - p.width;
+    let top = r.top - p.height - gap;
+    /* Flip below if it would overflow the top. */
+    if (top < 8) top = r.bottom + gap;
+    /* Clamp horizontally. */
+    left = Math.max(8, Math.min(window.innerWidth - p.width - 8, left));
+    panel.style.left = left + 'px';
+    panel.style.right = 'auto';
+    panel.style.top = top + 'px';
+    panel.style.bottom = 'auto';
+  }
+
   function openPopover(panelId, railBtn) {
     const panel = document.getElementById(panelId);
     const wasOpen = panel && panel.classList.contains('open');
@@ -766,27 +790,32 @@
     }
   }
   function setMode(mode) {
-    state.mode = mode;
     const isFill = mode === 'fill';
-    el.modeDesignBtn.classList.toggle('active', !isFill);
-    el.modeFillBtn.classList.toggle('active', isFill);
-    el.modeDesignBtn.setAttribute('aria-selected', String(!isFill));
-    el.modeFillBtn.setAttribute('aria-selected', String(isFill));
+    /* closeAllPopovers() resets pencil + state.mode='design'; assert the
+       requested mode after it runs so its reset doesn't stomp us. */
     closeAllPopovers();
+    state.mode = mode;
+    if (el.fillToggleBtn) {
+      el.fillToggleBtn.classList.toggle('active', isFill);
+      el.fillToggleBtn.setAttribute('aria-pressed', String(isFill));
+    }
     if (isFill) {
       state.selectedId = null;
       hideItemToolbar();
-      if (el.rightStack) el.rightStack.classList.add('popover-open');
       const fp = document.getElementById('fillPanel');
       if (fp) fp.classList.add('open');
-    } else {
-      const fp = document.getElementById('fillPanel');
-      if (fp) fp.classList.remove('open');
     }
     render();
     // Bind fill inputs to live item objects *after* render() so the
     // freshly-built nodes are the ones the inputs write into.
-    if (isFill) renderFillForm();
+    if (isFill) {
+      renderFillForm();
+      /* Position after the form is populated so getBoundingClientRect()
+         measures the final panel height — otherwise the panel is placed
+         against a zero/old height and overlaps surrounding chrome. */
+      const fp = document.getElementById('fillPanel');
+      if (fp) positionFillPanel(fp);
+    }
   }
 
   /* ---------- Alignment ---------- */
@@ -858,6 +887,10 @@
     on(el.layoutComboBtn, 'click', (e) => {
       e.stopPropagation();
       el.layoutComboList.classList.toggle('open');
+    });
+    window.addEventListener('resize', () => {
+      const fp = document.getElementById('fillPanel');
+      if (fp && fp.classList.contains('open')) positionFillPanel(fp);
     });
     on(el.layoutComboList, 'click', (e) => e.stopPropagation());
 
@@ -956,13 +989,9 @@
       });
     }
 
-    on(el.modeDesignBtn, 'click', (e) => {
+    on(el.fillToggleBtn, 'click', (e) => {
       e.stopPropagation();
-      setMode('design');
-    });
-    on(el.modeFillBtn, 'click', (e) => {
-      e.stopPropagation();
-      setMode('fill');
+      setMode(state.mode === 'fill' ? 'design' : 'fill');
     });
     on(el.saveLayout, 'click', saveLayout);
     on(el.exportLayout, 'click', () => {

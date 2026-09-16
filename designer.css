@@ -467,68 +467,52 @@
   gap: 8px;
 }
 
-#modePill {
-  display: flex;
-  gap: 4px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 6px;
-  box-shadow: var(--shadow-md);
-}
-
-.mode-btn {
-  height: 30px;
-  padding: 0 16px;
-  border: none;
-  background: transparent;
-  border-radius: 6px;
-  color: var(--ink-soft);
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
-}
-
-.mode-btn:hover {
-  background: var(--surface-hover);
-  color: var(--ink);
-}
-.mode-btn.active {
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
 #bottomRightBar {
   position: fixed;
   bottom: 24px;
   right: 24px;
   z-index: 55;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.print-text-btn {
+.icon-round-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 42px;
-  padding: 0 20px;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
   border: none;
-  border-radius: var(--radius);
+  border-radius: 50%;
   background: var(--accent);
   color: #fff;
-  font-family: inherit;
-  font-size: 13.5px;
-  font-weight: 600;
   cursor: pointer;
   box-shadow: var(--shadow-md);
-  transition: background 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
-.print-text-btn:hover {
+.icon-round-btn:hover {
   background: var(--accent-hover);
+}
+
+.icon-round-btn:active {
+  transform: scale(0.96);
+}
+
+.icon-round-btn.active {
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow:
+    var(--shadow-md),
+    inset 0 0 0 2px var(--accent);
+}
+
+.icon-round-btn .icon {
+  width: 20px;
+  height: 20px;
 }
 
 /* ---------- Item toolbar ---------- */
@@ -646,9 +630,8 @@
 
 .rail-btn:focus-visible,
 .layout-btn:focus-visible,
-.mode-btn:focus-visible,
 .toolbar-icon-btn:focus-visible,
-.print-text-btn:focus-visible {
+.icon-round-btn:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -656,7 +639,11 @@
 /* ---------- Fill panel ---------- */
 
 #fillPanel {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
   width: 280px;
+  max-height: calc(100vh - 48px);
 }
 #fillFormList {
   display: flex;
