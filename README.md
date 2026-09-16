@@ -31,7 +31,22 @@ Pure static HTML/CSS/JS. No server, no build step, no npm.
 | `sdk.js` | Host-side UMD wrapper (`PaperStamp.embed()`) |
 | `example.html` | Runnable SDK demo |
 | `PLUGIN.md` | Authoritative embedding contract |
+| `INTEGRATION.md` | Use it from another project (hosted or vendored) |
+| `llms.txt` | Machine-readable summary for LLMs |
 | `AGENTS.md` | Architecture notes |
+
+## Use it from another project
+
+paperstamp is live on GitHub Pages, so you can use it **directly from the URL** —
+no clone, no npm:
+
+```html
+<script src="https://downloaddoctor.github.io/paperstamp/sdk.js"></script>
+```
+
+`sdk.js` auto-derives the embed iframe from its own script URL. See
+[INTEGRATION.md](INTEGRATION.md) for hosted vs. self-hosted setups, or
+[llms.txt](llms.txt) for a machine-readable summary.
 
 ## Quick start (designer)
 

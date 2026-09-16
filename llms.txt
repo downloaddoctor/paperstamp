@@ -1,0 +1,112 @@
+# paperstamp
+
+> Static, dependency-free browser layout designer + print runtime. Design forms, bind data, print at exact positions onto pre-printed paper. No build step, no server, no npm.
+
+paperstamp renders a `layoutDef` (page size, orientation, positioned text items) onto a page-sized canvas and prints it at exact mm positions. It can run standalone (designer) or embedded in any host via a hidden iframe + `postMessage`.
+
+## Live URLs (usable directly, no install)
+
+- Designer: https://downloaddoctor.github.io/paperstamp/
+- Embed runtime: https://downloaddoctor.github.io/paperstamp/sdk.html
+- Host SDK (script): https://downloaddoctor.github.io/paperstamp/sdk.js
+- SDK demo: https://downloaddoctor.github.io/paperstamp/example.html
+
+`paperstamp` is published on GitHub Pages, so external projects can load the SDK
+straight from the live URL — no clone, no npm, no bundler:
+
+```html
+<script src="https://downloaddoctor.github.io/paperstamp/sdk.js"></script>
+```
+
+`sdk.js` auto-derives its iframe target (`sdk.html?embed=1`) from its own
+`<script src>`, so no `src` option is required.
+
+## Source
+
+- Repository: https://github.com/downloaddoctor/paperstamp
+- License: MIT
+- Version: 1
+
+## Minimal integration (host page)
+
+```html
+<script src="https://downloaddoctor.github.io/paperstamp/sdk.js"></script>
+<script>
+  const lp = PaperStamp.embed({
+    origin: location.origin,
+    onReady: ({ layouts }) => console.log('ready', layouts),
+    onDone:  (job)       => console.log('printed', job),
+    onError: (err)       => console.error(err.code, err.message)
+  });
+
+  lp.print({
+    layoutDef: {
+      pageWmm: 210, pageHmm: 297, orientation: 'portrait',
+      items: [{
+        id: 1, type: 'text', x: 10, y: 10, w: 60, h: 8,
+        text: 'Name', name: 'name', fontSize: 14,
+        align: 'left', valign: 'top'
+      }]
+    },
+    fieldValues: { name: 'Jane Doe' }
+  });
+</script>
+```
+
+## API
+
+`PaperStamp.embed(opts) -> instance`
+
+opts: `src?`, `origin?`, `container?`, `width?`, `height?`, `autoShow?`,
+`defaultLayout?`, `layoutId?`, `onReady?`, `onDone?`, `onError?`.
+
+instance methods: `preview({layoutDef, fieldValues?})`,
+`print({layoutDef, fieldValues?, options?})`,
+`printById(layoutId, fieldValues?, options?)`,
+`register(layoutDef)`, `ping()`, `isReady()`, `layouts()`,
+`on('ready'|'done'|'error', fn)`, `openDesigner()`, `closeDesigner()`,
+`export(cb?)`, `import(layoutDef, options?)`, `destroy()`.
+
+## Schemas
+
+```ts
+type Item = {
+  id: number;
+  type: 'text';
+  x: number; y: number; w: number; h: number; // 0-100, % of page
+  text: string;
+  name: string;        // field key used to bind fieldValues
+  fontSize: number;    // pt
+  align: 'left' | 'center' | 'right';
+  valign: 'top' | 'middle' | 'bottom';
+};
+
+type LayoutDef = {
+  name?: string;       // if set, upserted into plugin localStorage
+  pageWmm: number;     // portrait width in mm
+  pageHmm: number;     // portrait height in mm
+  orientation: 'portrait' | 'landscape';
+  items: Item[];
+};
+```
+
+## Raw postMessage protocol (no SDK)
+
+Host -> plugin: `paperstamp:preview` | `paperstamp:print` |
+`paperstamp:printById` | `paperstamp:register` | `paperstamp:ping` |
+`paperstamp:openDesigner` | `paperstamp:closeDesigner` |
+`paperstamp:export` | `paperstamp:import`
+
+Plugin -> host: `paperstamp:ready {version, layouts}` |
+`paperstamp:done` | `paperstamp:error {code, message}`
+
+Error codes: `E_BAD_ORIGIN`, `E_BAD_MESSAGE`, `E_BAD_LAYOUT_DEF`,
+`E_NO_LAYOUT`, `E_PRINT_BLOCKED`.
+
+## Notes
+
+- Full embedding contract: https://github.com/downloaddoctor/paperstamp/blob/main/PLUGIN.md
+- Browser support: Chrome, Edge, Firefox. Safari `@page` mm positioning is approximate.
+- `window.print()` always shows the print dialog; true silent printing needs Chrome `--kiosk-printing` or an Electron host.
+- Item text is rendered via `textContent` (no HTML injection).
+- Layouts persist in the plugin origin's `localStorage` under `paperstampLayouts` (capped at 100, LRU evicted).
