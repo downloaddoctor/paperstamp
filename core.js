@@ -180,7 +180,8 @@
   const emitReady = () => {
     post('paperstamp:ready', {
       version: PROTOCOL_VERSION,
-      layouts: listLayouts()
+      layouts: listLayouts(),
+      layoutDefs: getAllLayouts()
     });
   };
   const emitDone = (info) => post('paperstamp:done', info || {});
@@ -376,6 +377,18 @@
     });
   }
 
+  function applyGuideToDom() {
+    if (!el.guideImg) return;
+    if (state.guideSrc) {
+      el.guideImg.src = state.guideSrc;
+      el.guideImg.style.display = 'block';
+    } else {
+      el.guideImg.removeAttribute('src');
+      el.guideImg.style.display = 'none';
+    }
+    el.guideImg.style.opacity = state.guideOpacity / 100;
+  }
+
   function applyLayoutToState(def, fv, labelName, opts) {
     state.pageWmm = def.pageWmm;
     state.pageHmm = def.pageHmm;
@@ -386,6 +399,12 @@
     );
     state.nextId = Math.max(1, computeNextId(state.items));
     state.selectedId = null;
+    if (Object.prototype.hasOwnProperty.call(def, 'guideSrc')) {
+      state.guideSrc = def.guideSrc || '';
+      state.guideOpacity =
+        typeof def.guideOpacity === 'number' ? def.guideOpacity : 60;
+      applyGuideToDom();
+    }
     applyPageSize();
     if ((opts || {}).silent !== false) setSilentMode(true);
     render();
@@ -396,6 +415,10 @@
   function applyValidatedLayoutToState(def, fv, labelName, opts) {
     const result = sanitizeLayoutDef(def);
     if (!result.ok) return result;
+    if (Object.prototype.hasOwnProperty.call(def, 'guideSrc')) {
+      result.def.guideSrc = def.guideSrc;
+      result.def.guideOpacity = def.guideOpacity;
+    }
     applyLayoutToState(result.def, fv, labelName, opts);
     return result;
   }
@@ -599,6 +622,31 @@
     'paperstamp:export'() {
       post('paperstamp:exportResult', { layoutDef: exportLayoutDef() });
     },
+    'paperstamp:listLayoutDefs'() {
+      post('paperstamp:layoutDefs', { layouts: getAllLayouts() });
+    },
+    'paperstamp:previewById'(m) {
+      if (!m.layoutId) {
+        emitError('E_BAD_MESSAGE', 'previewById requires layoutId.');
+        return;
+      }
+      const data = getAllLayouts()[m.layoutId];
+      if (!data) {
+        emitError('E_NO_LAYOUT', 'Layout "' + m.layoutId + '" not found.');
+        return;
+      }
+      const result = applyValidatedLayoutToState(
+        data,
+        m.fieldValues || null,
+        m.layoutId,
+        { silent: true }
+      );
+      if (!result.ok) {
+        emitError('E_BAD_LAYOUT_DEF', result.errors.join('; '));
+        return;
+      }
+      revealPage();
+    },
     'paperstamp:import'(m) {
       // importLayoutDef() sanitizes; skip the redundant pre-check.
       const result = importLayoutDef(
@@ -674,6 +722,7 @@
     },
     applyLayoutToState,
     applyValidatedLayoutToState,
+    applyGuideToDom,
     exportLayoutDef,
     importLayoutDef,
     applyFieldValuesToItems,

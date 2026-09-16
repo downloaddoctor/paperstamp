@@ -29,16 +29,19 @@
       origin: opts.origin || '*',
       queue: [],
       layouts: [],
+      layoutDefs: {},
       pending: null,
+      pendingExport: null,
+      pendingListLayoutDefs: null,
       autoShow: opts.autoShow !== false,
       defaultLayout: opts.defaultLayout || null,
       layoutId: opts.layoutId || null,
-      pendingExport: null,
       listeners: {
         ready: typeof opts.onReady === 'function' ? [opts.onReady] : [],
         done: typeof opts.onDone === 'function' ? [opts.onDone] : [],
         error: typeof opts.onError === 'function' ? [opts.onError] : [],
-        exportResult: []
+        exportResult: [],
+        layoutDefs: []
       }
     };
     const expectOrigin =
@@ -74,7 +77,12 @@
       if (msg.type === 'paperstamp:ready') {
         inst.ready = true;
         inst.layouts = msg.layouts || [];
-        emit('ready', { version: msg.version, layouts: inst.layouts });
+        inst.layoutDefs = msg.layoutDefs || {};
+        emit('ready', {
+          version: msg.version,
+          layouts: inst.layouts,
+          layoutDefs: inst.layoutDefs
+        });
         flushQueue();
         if (inst.autoShow) {
           if (inst.defaultLayout) {
@@ -88,6 +96,12 @@
         inst.pendingExport = null;
         emit('exportResult', { layoutDef: msg.layoutDef });
         if (typeof cb === 'function') cb(msg.layoutDef);
+      } else if (msg.type === 'paperstamp:layoutDefs') {
+        inst.layoutDefs = msg.layouts || {};
+        const cb = inst.pendingListLayoutDefs;
+        inst.pendingListLayoutDefs = null;
+        emit('layoutDefs', { layouts: inst.layoutDefs });
+        if (typeof cb === 'function') cb(inst.layoutDefs);
       } else if (msg.type === 'paperstamp:done') {
         const info = inst.pending || {};
         inst.pending = null;
@@ -114,6 +128,27 @@
       iframe,
       isReady: () => inst.ready,
       layouts: () => inst.layouts.slice(),
+      layoutDefs: () => Object.assign({}, inst.layoutDefs),
+      listLayoutDefs(cb) {
+        inst.pendingListLayoutDefs = typeof cb === 'function' ? cb : null;
+        enqueue({ type: 'paperstamp:listLayoutDefs' });
+        return api;
+      },
+      previewById(layoutId, fieldValues) {
+        if (!layoutId) {
+          emit('error', {
+            code: 'E_BAD_CALL',
+            message: 'previewById() requires layoutId.'
+          });
+          return api;
+        }
+        enqueue({
+          type: 'paperstamp:previewById',
+          layoutId,
+          fieldValues: fieldValues || null
+        });
+        return api;
+      },
       print(job) {
         if (!job || !job.layoutDef) {
           emit('error', {
@@ -188,6 +223,7 @@
        */
       openDesigner() {
         enqueue({ type: 'paperstamp:openDesigner' });
+        return api;
       },
       /**
        * Request the current in-plugin layout as JSON.
@@ -225,17 +261,19 @@
       },
       destroy() {
         window.removeEventListener('message', onMessage);
-        inst.listeners = { ready: [], done: [], error: [] };
+        inst.listeners = {
+          ready: [],
+          done: [],
+          error: [],
+          exportResult: [],
+          layoutDefs: []
+        };
         if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
       }
     };
     return api;
   }
 
-  /**
-   * Create a hidden iframe pointed at PaperStamp and return a control handle.
-   * src is optional — derived from the SDK script's own directory when omitted.
-   */
   /**
    * Create a hidden iframe pointed at PaperStamp.
    * opts:

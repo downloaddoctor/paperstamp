@@ -194,15 +194,7 @@
   /* ---------- State <-> DOM sync ---------- */
 
   function syncGuideDom() {
-    if (!el.guideImg) return;
-    if (state.guideSrc) {
-      el.guideImg.src = state.guideSrc;
-      el.guideImg.style.display = 'block';
-    } else {
-      el.guideImg.removeAttribute('src');
-      el.guideImg.style.display = 'none';
-    }
-    el.guideImg.style.opacity = state.guideOpacity / 100;
+    core.applyGuideToDom();
     if (el.guideOpacity) el.guideOpacity.value = state.guideOpacity;
     if (el.opacityVal) el.opacityVal.textContent = state.guideOpacity;
   }
@@ -562,7 +554,9 @@
       pageWmm: state.pageWmm,
       pageHmm: state.pageHmm,
       orientation: state.orientation,
-      items: state.items
+      items: state.items,
+      guideSrc: state.guideSrc,
+      guideOpacity: state.guideOpacity
     };
     if (!setAllLayouts(l)) {
       notify('Could not save: storage is full or unavailable.');
@@ -588,6 +582,10 @@
       return;
     }
     core.applyLayoutToState(data, null, id, { silent: false });
+    state.guideSrc = data.guideSrc || '';
+    state.guideOpacity =
+      typeof data.guideOpacity === 'number' ? data.guideOpacity : 60;
+    syncGuideDom();
     syncPageSetupInputs();
     setMode('design');
   }

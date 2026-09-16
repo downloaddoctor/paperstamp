@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PaperStamp Plugin Demo</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>PaperStamp — Protocol Exerciser</title>
     <style>
       * {
         box-sizing: border-box;
@@ -12,77 +12,120 @@
       body {
         margin: 0;
         height: 100%;
+        font:
+          13px/1.5 system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          sans-serif;
+        color: #1a1d29;
       }
       body {
-        font-family: system-ui, sans-serif;
-        color: #1a1d29;
         display: flex;
       }
-      #controls {
+
+      #left {
         width: 50%;
         height: 100%;
         overflow: auto;
-        padding: 32px 28px;
+        padding: 20px 22px;
         border-right: 1px solid #e4e6ec;
+        background: #fff;
       }
-      #preview {
+      #right {
         width: 50%;
         height: 100%;
-        position: relative;
+        display: flex;
+        flex-direction: column;
         background: #f5f6f9;
         overflow: hidden;
       }
-      #preview iframe {
+      #preview-pane {
+        flex: 1 1 50%;
+        min-height: 0;
+        position: relative;
+        background: #fff;
+        border-bottom: 1px solid #e4e6ec;
+      }
+      #preview-pane iframe {
         position: absolute;
         inset: 0;
         width: 100%;
         height: 100%;
         border: 0;
       }
-      h1 {
-        font-size: 20px;
-        margin: 0 0 8px;
+      #log-pane {
+        flex: 1 1 50%;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        background: #f8f9fb;
       }
-      p.lead {
+      #log-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 12px;
+        border-bottom: 1px solid #e4e6ec;
+        background: #fff;
+        font-size: 11px;
         color: #5b6072;
-        margin: 0 0 24px;
-        font-size: 14px;
-        line-height: 1.5;
-      }
-      .field {
-        margin-bottom: 14px;
-      }
-      .field label {
-        display: block;
-        font-size: 12px;
-        font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.02em;
+        letter-spacing: 0.04em;
+      }
+      #log {
+        flex: 1;
+        overflow: auto;
+        padding: 8px 12px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+        line-height: 1.55;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      #b-clear {
+        font-size: 11px;
+        padding: 3px 8px;
+      }
+      h3:first-of-type {
+        margin-top: 0;
+      }
+
+      .card {
+        border: 1px solid #e4e6ec;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 12px;
+        background: #fafbfc;
+      }
+      .card h4 {
+        margin: 0 0 8px;
+        font-size: 12px;
+        color: #3454d1;
+      }
+      .card p.note {
+        margin: 0 0 8px;
+        font-size: 11px;
         color: #5b6072;
-        margin-bottom: 6px;
       }
-      input {
-        width: 100%;
-        padding: 8px 10px;
-        border: 1px solid #d4d7e0;
-        border-radius: 6px;
-        font-size: 14px;
-        font-family: inherit;
-      }
-      .actions {
+
+      .row {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
-        margin: 20px 0;
+        gap: 6px;
+        margin-bottom: 6px;
+      }
+      .row:last-child {
+        margin-bottom: 0;
       }
       button {
-        padding: 9px 16px;
-        border-radius: 6px;
+        padding: 6px 11px;
+        border-radius: 5px;
         border: 1px solid #d4d7e0;
         background: #fff;
         cursor: pointer;
-        font-size: 13px;
-        font-family: inherit;
+        font: inherit;
+        font-size: 12px;
         font-weight: 500;
       }
       button:hover {
@@ -96,61 +139,430 @@
       button.primary:hover {
         background: #2a44b3;
       }
-      h3 {
-        font-size: 13px;
-        text-transform: uppercase;
-        letter-spacing: 0.02em;
-        color: #5b6072;
-        margin: 24px 0 8px;
+      button.warn {
+        border-color: #e8b4b4;
+        color: #b23434;
       }
-      pre {
-        background: #f8f9fb;
+      button.warn:hover {
+        background: #fdf3f3;
+      }
+      select,
+      input[type='text'],
+      input[type='number'] {
+        padding: 5px 8px;
+        border: 1px solid #d4d7e0;
+        border-radius: 5px;
+        font: inherit;
+        font-size: 12px;
+      }
+      input:focus,
+      select:focus {
+        outline: 2px solid #3454d1;
+        outline-offset: -1px;
+        border-color: #3454d1;
+      }
+      label {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        font-size: 11px;
+        color: #5b6072;
+        margin-bottom: 6px;
+      }
+      label.inline {
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 0;
+      }
+
+      .ln {
+        display: block;
+        padding: 2px 0;
+      }
+      .ln .ts {
+        color: #8b90a0;
+        margin-right: 6px;
+      }
+      .ln.info {
+        color: #2a44b3;
+      }
+      .ln.ok {
+        color: #0a7a3a;
+      }
+      .ln.err {
+        color: #b23434;
+      }
+      .ln.evt {
+        color: #6a3da1;
+      }
+
+      details {
         border: 1px solid #e4e6ec;
         border-radius: 6px;
-        padding: 10px;
+        padding: 6px 10px;
+        margin-bottom: 6px;
+        background: #fff;
+      }
+      details summary {
+        cursor: pointer;
         font-size: 12px;
-        line-height: 1.5;
+        font-weight: 500;
+      }
+      details pre {
+        margin: 8px 0 0;
+        padding: 8px;
+        background: #f8f9fb;
+        border-radius: 4px;
+        font-size: 11px;
         overflow: auto;
         max-height: 200px;
+      }
+      details p {
+        margin: 6px 0 0;
+        font-size: 11px;
+        color: #5b6072;
+      }
+
+      #fields .field-row {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+      #fields .field-row label {
         margin: 0;
+        flex: 1;
+      }
+      #fields .field-row input {
+        flex: 2;
+      }
+
+      .hint {
+        font-size: 11px;
+        color: #8b90a0;
+        margin-top: 4px;
       }
     </style>
   </head>
   <body>
-    <div id="controls">
-      <h1>PaperStamp Plugin Demo</h1>
+    <div id="left">
+      <h1>PaperStamp — Protocol Exerciser</h1>
       <p class="lead">
-        The right pane is the live plugin. Editing a field re-renders the
-        preview instantly via <code>preview()</code>. Print buttons trigger a
-        real print job in the same iframe.
+        Every host&rarr;plugin message has a button. Every plugin&rarr;host
+        message appears in the log below. The right pane is the live plugin
+        iframe.
       </p>
 
-      <div class="field">
-        <label for="name">Name</label>
-        <input id="name" value="Jane Doe" />
-      </div>
-      <div class="field">
-        <label for="address">Address</label>
-        <input id="address" value="123 Main St" />
+      <h3>Controls</h3>
+
+      <div class="card">
+        <h4>Lifecycle</h4>
+        <p class="note">
+          Basic wiring. Ping shows the plugin is alive; register saves a named
+          layout; export returns the current in-memory layout.
+        </p>
+        <div class="row">
+          <button id="b-ping" title="Sends paperstamp:ping">
+            Ping (re-emit ready)
+          </button>
+          <button
+            id="b-register"
+            title="Sends paperstamp:register with a fixed sample layout"
+          >
+            Register sample layout
+          </button>
+          <button
+            id="b-export"
+            title="Sends paperstamp:export; prints the returned layoutDef in log"
+          >
+            Export current layout
+          </button>
+        </div>
       </div>
 
-      <div class="actions">
-        <button id="printStateless" class="primary">Print stateless</button>
-        <button id="register">Register layout</button>
-        <button id="printById">Print by id</button>
+      <div class="card">
+        <h4>Layouts (saved in plugin localStorage)</h4>
+        <p class="note">
+          The dropdown is populated from onReady.layouts and refreshed by
+          listLayoutDefs. previewById renders a saved layout without printing.
+          printById prints it.
+        </p>
+        <label
+          >Saved layout
+          <select id="layout-select">
+            <option value="">(none yet — register or design one)</option>
+          </select>
+        </label>
+        <div class="row">
+          <button
+            id="b-listdefs"
+            class="primary"
+            title="Sends paperstamp:listLayoutDefs"
+          >
+            List layout defs (NEW)
+          </button>
+          <button id="b-previewbyid" title="Sends paperstamp:previewById">
+            Preview by id
+          </button>
+          <button id="b-printbyid" title="Sends paperstamp:printById">
+            Print by id
+          </button>
+          <button
+            id="b-loaddef"
+            title="Copies the selected def into current in-memory layout via import"
+          >
+            Load def into current
+          </button>
+          <button
+            id="b-delete"
+            class="warn"
+            title="Removes the layout from plugin localStorage"
+          >
+            Delete from plugin
+          </button>
+        </div>
       </div>
 
-      <h3>Log</h3>
-      <pre id="log"></pre>
+      <div class="card">
+        <h4>Designer</h4>
+        <p class="note">
+          Opens the full designer UI inside the embedded iframe. Same designer
+          as index.html. Saves go to the plugin origin's localStorage.
+        </p>
+        <div class="row">
+          <button
+            id="b-opendesigner"
+            class="primary"
+            title="Sends paperstamp:openDesigner"
+          >
+            Open designer
+          </button>
+          <button id="b-closedesigner" title="Sends paperstamp:closeDesigner">
+            Close designer
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>Print &amp; preview (current in-memory layout)</h4>
+        <p class="note">
+          Uses the layoutDef currently loaded in the plugin. After import or
+          previewById, this is that layout.
+        </p>
+        <div class="row">
+          <button
+            id="b-preview"
+            title="Sends paperstamp:preview with current in-memory layout"
+          >
+            Preview current
+          </button>
+          <button
+            id="b-print"
+            class="primary"
+            title="Sends paperstamp:print with current in-memory layout"
+          >
+            Print current
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>Import / export file</h4>
+        <p class="note">
+          JSON file containing a layoutDef. Round-trips a layout through the
+          host filesystem.
+        </p>
+        <div class="row">
+          <button id="b-exportfile" title="Downloads current layout as .json">
+            Export to file
+          </button>
+          <button
+            id="b-importfile"
+            title="Uploads a .json as a layoutDef and imports it"
+          >
+            Import from file
+          </button>
+          <input
+            id="import-file"
+            type="file"
+            accept="application/json"
+            hidden
+          />
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>Field values (auto-generated from current layout)</h4>
+        <p class="note">
+          Each input maps to an item whose <code>name</code> matches. Values are
+          sent as fieldValues on preview/print calls.
+        </p>
+        <div id="fields">
+          <p class="hint">Load a layout to see its fields.</p>
+        </div>
+      </div>
+
+      <h3>Protocol reference (expand to see JSON shapes)</h3>
+
+      <details>
+        <summary>
+          paperstamp:ready &mdash; emitted on load, after register, and in reply
+          to ping
+        </summary>
+        <pre>
+{ type:'paperstamp:ready', version:'1', layouts:['id1','id2'], layoutDefs:{ id1:{...}, id2:{...} } }</pre
+        >
+        <p>
+          Host receives this once on boot, again after register, and again after
+          ping. Tolerate repeats.
+        </p>
+      </details>
+
+      <details>
+        <summary>
+          paperstamp:preview &mdash; render a layoutDef without printing
+        </summary>
+        <pre>
+{ type:'paperstamp:preview', layoutDef:{...}, fieldValues:{ name:'Jane' } }</pre
+        >
+        <p>
+          Requires layoutDef.items to be an array. Renders silently. No print
+          dialog.
+        </p>
+      </details>
+
+      <details>
+        <summary>
+          paperstamp:previewById &mdash; render a SAVED layout by id, no
+          printing
+        </summary>
+        <pre>
+{ type:'paperstamp:previewById', layoutId:'shipping-label', fieldValues:{ name:'Jane' } }</pre
+        >
+        <p>
+          New in this version. Loads the layout from plugin localStorage,
+          renders it, does not print.
+        </p>
+      </details>
+
+      <details>
+        <summary>
+          paperstamp:print &mdash; print an arbitrary layoutDef (stateless)
+        </summary>
+        <pre>
+{ type:'paperstamp:print', layoutDef:{...}, fieldValues:{...}, options:{ silent:false } }</pre
+        >
+        <p>
+          Opens the browser print dialog. Nothing persisted unless
+          layoutDef.name is set AND options.persist is true.
+        </p>
+      </details>
+
+      <details>
+        <summary>
+          paperstamp:printById &mdash; print a SAVED layout by id
+        </summary>
+        <pre>
+{ type:'paperstamp:printById', layoutId:'shipping-label', fieldValues:{...}, options:{} }</pre
+        >
+        <p>Opens the print dialog. Emits paperstamp:done on afterprint.</p>
+      </details>
+
+      <details>
+        <summary>
+          paperstamp:register &mdash; save a layoutDef into plugin localStorage
+          (no print)
+        </summary>
+        <pre>
+{ type:'paperstamp:register', layoutDef:{ name:'my-layout', ... } }</pre
+        >
+        <p>layoutDef.name is required. Re-emits paperstamp:ready afterwards.</p>
+      </details>
+
+      <details>
+        <summary>
+          paperstamp:listLayoutDefs &mdash; NEW: fetch every saved layoutDef in
+          one shot
+        </summary>
+        <pre>{ type:'paperstamp:listLayoutDefs' }</pre>
+        <p>Plugin replies with <code>paperstamp:layoutDefs</code>:</p>
+        <pre>
+{ type:'paperstamp:layoutDefs', layouts:{ id1:{...}, id2:{...} } }</pre
+        >
+      </details>
+
+      <details>
+        <summary>
+          paperstamp:export &mdash; export the CURRENT in-memory layout as JSON
+        </summary>
+        <pre>{ type:'paperstamp:export' }</pre>
+        <p>
+          Reply:
+          <code>{ type:'paperstamp:exportResult', layoutDef:{...} }</code>
+        </p>
+      </details>
+
+      <details>
+        <summary>
+          paperstamp:import &mdash; replace current in-memory layout with a
+          layoutDef
+        </summary>
+        <pre>
+{ type:'paperstamp:import', layoutDef:{...}, options:{ silent:false } }</pre
+        >
+      </details>
+
+      <details>
+        <summary>paperstamp:openDesigner / closeDesigner</summary>
+        <pre>{ type:'paperstamp:openDesigner' }</pre>
+        <pre>{ type:'paperstamp:closeDesigner' }</pre>
+        <p>
+          Lazily loads designer.html + designer.js + designer.css into the
+          embed.
+        </p>
+      </details>
+
+      <details>
+        <summary>
+          paperstamp:ping &mdash; ask the plugin to re-emit ready
+        </summary>
+        <pre>{ type:'paperstamp:ping' }</pre>
+      </details>
     </div>
 
-    <div id="preview"></div>
+    <div id="right">
+      <div id="preview-pane"></div>
+      <div id="log-pane">
+        <div id="log-head">
+          <span>Inbound log (plugin &rarr; host)</span>
+          <button id="b-clear">Clear</button>
+        </div>
+        <div id="log"></div>
+      </div>
+    </div>
 
     <script src="sdk.js"></script>
     <script>
+      'use strict';
+
+      /* =========================================================================
+       * PaperStamp protocol exerciser.
+       * One embed, visible in #right. Buttons send host->plugin messages.
+       * Every plugin->host message is logged with a timestamp and color.
+       * ========================================================================= */
+
       const logEl = document.getElementById('log');
-      function log(msg) {
-        logEl.textContent += msg + '\n';
+      function log(kind, text) {
+        const ln = document.createElement('span');
+        ln.className = 'ln ' + kind;
+        const ts = new Date().toLocaleTimeString([], { hour12: false });
+        ln.innerHTML =
+          '<span class="ts">' +
+          ts +
+          '</span>' +
+          String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+        logEl.appendChild(ln);
         logEl.scrollTop = logEl.scrollHeight;
       }
 
@@ -187,74 +599,272 @@
         ]
       };
 
-      const previewHost = document.getElementById('preview');
+      let currentLayoutDef = sampleLayout;
+      let savedLayouts = {}; // { id: layoutDef }
 
       const lp = PaperStamp.embed({
-        container: previewHost,
+        container: document.getElementById('preview-pane'),
         width: '100%',
         height: '100%',
         autoShow: false,
-        onReady: function (info) {
+        onReady: ({ version, layouts, layoutDefs }) => {
           log(
-            'ready v' +
-              info.version +
-              ', layouts=' +
-              JSON.stringify(info.layouts)
+            'evt',
+            '← paperstamp:ready  v' +
+              version +
+              '  layouts=' +
+              JSON.stringify(layouts)
           );
-          pushPreview();
+          savedLayouts = layoutDefs || {};
+          refreshLayoutSelect();
+          refreshFields();
         },
-        onDone: function (job) {
-          log('done ' + JSON.stringify(job));
+        onDone: (job) => {
+          log('evt', '← paperstamp:done  ' + JSON.stringify(job));
         },
-        onError: function (err) {
-          log('error ' + err.code + ': ' + err.message);
+        onError: (err) => {
+          log('err', '← paperstamp:error  ' + err.code + ': ' + err.message);
         }
       });
 
-      function currentFieldValues() {
-        return {
-          name: document.getElementById('name').value,
-          address: document.getElementById('address').value
-        };
+      lp.on('exportResult', ({ layoutDef }) => {
+        log('evt', '← paperstamp:exportResult');
+        log('info', '   layoutDef = ' + JSON.stringify(layoutDef, null, 2));
+        currentLayoutDef = layoutDef;
+        refreshFields();
+      });
+
+      lp.on('layoutDefs', ({ layouts }) => {
+        log(
+          'evt',
+          '← paperstamp:layoutDefs  ids=' +
+            JSON.stringify(Object.keys(layouts || {}))
+        );
+        savedLayouts = layouts || {};
+        refreshLayoutSelect();
+      });
+
+      /* ---------- UI helpers ---------- */
+
+      function refreshLayoutSelect() {
+        const sel = document.getElementById('layout-select');
+        const prev = sel.value;
+        sel.replaceChildren();
+        const ids = Object.keys(savedLayouts).sort();
+        if (!ids.length) {
+          const o = document.createElement('option');
+          o.value = '';
+          o.textContent = '(no saved layouts)';
+          sel.appendChild(o);
+          return;
+        }
+        for (const id of ids) {
+          const o = document.createElement('option');
+          o.value = id;
+          o.textContent = id;
+          if (id === prev) o.selected = true;
+          sel.appendChild(o);
+        }
       }
 
-      let previewTimer = null;
-      function pushPreview() {
-        clearTimeout(previewTimer);
-        previewTimer = setTimeout(function () {
-          lp.preview({
-            layoutDef: sampleLayout,
-            fieldValues: currentFieldValues()
+      function refreshFields() {
+        const host = document.getElementById('fields');
+        host.replaceChildren();
+        const items = (currentLayoutDef && currentLayoutDef.items) || [];
+        const names = [...new Set(items.map((i) => i.name).filter(Boolean))];
+        if (!names.length) {
+          const p = document.createElement('p');
+          p.className = 'hint';
+          p.textContent = 'No named fields in current layout.';
+          host.appendChild(p);
+          return;
+        }
+        for (const n of names) {
+          const row = document.createElement('div');
+          row.className = 'field-row';
+          const lab = document.createElement('label');
+          lab.textContent = n;
+          const inp = document.createElement('input');
+          inp.type = 'text';
+          inp.dataset.fieldName = n;
+          inp.placeholder = 'value for ' + n;
+          inp.addEventListener('input', () => {
+            lp.preview({
+              layoutDef: currentLayoutDef,
+              fieldValues: readFieldValues()
+            });
           });
-        }, 80);
+          lab.appendChild(inp);
+          row.appendChild(lab);
+          host.appendChild(row);
+        }
       }
 
-      document.getElementById('name').addEventListener('input', pushPreview);
-      document.getElementById('address').addEventListener('input', pushPreview);
-
-      document
-        .getElementById('printStateless')
-        .addEventListener('click', function () {
-          log('print stateless: ' + document.getElementById('name').value);
-          lp.print({
-            layoutDef: sampleLayout,
-            fieldValues: currentFieldValues()
+      function readFieldValues() {
+        const out = {};
+        document
+          .querySelectorAll('#fields input[data-field-name]')
+          .forEach((i) => {
+            if (i.value) out[i.dataset.fieldName] = i.value;
           });
-        });
+        return out;
+      }
 
-      document
-        .getElementById('register')
-        .addEventListener('click', function () {
-          log('register: ' + sampleLayout.name);
-          lp.register(sampleLayout);
-        });
+      function selectedId() {
+        return document.getElementById('layout-select').value || null;
+      }
 
-      document
-        .getElementById('printById')
-        .addEventListener('click', function () {
-          log('print by id: ' + document.getElementById('name').value);
-          lp.printById(sampleLayout.name, currentFieldValues());
+      /* ---------- Button wiring ---------- */
+
+      document.getElementById('b-ping').onclick = () => {
+        log('info', '→ paperstamp:ping');
+        lp.ping();
+      };
+
+      document.getElementById('b-register').onclick = () => {
+        log('info', '→ paperstamp:register  name=' + sampleLayout.name);
+        lp.register(sampleLayout);
+      };
+
+      document.getElementById('b-export').onclick = () => {
+        log('info', '→ paperstamp:export');
+        lp.export();
+      };
+
+      document.getElementById('b-listdefs').onclick = () => {
+        log('info', '→ paperstamp:listLayoutDefs');
+        lp.listLayoutDefs();
+      };
+
+      document.getElementById('b-previewbyid').onclick = () => {
+        const id = selectedId();
+        if (!id) {
+          log('err', 'no layout selected');
+          return;
+        }
+        log('info', '→ paperstamp:previewById  id=' + id);
+        lp.previewById(id, readFieldValues());
+      };
+
+      document.getElementById('b-printbyid').onclick = () => {
+        const id = selectedId();
+        if (!id) {
+          log('err', 'no layout selected');
+          return;
+        }
+        log('info', '→ paperstamp:printById  id=' + id);
+        lp.printById(id, readFieldValues());
+      };
+
+      document.getElementById('b-loaddef').onclick = () => {
+        const id = selectedId();
+        if (!id || !savedLayouts[id]) {
+          log('err', 'no saved def for id ' + id);
+          return;
+        }
+        const def = savedLayouts[id];
+        log('info', '→ paperstamp:import  id=' + id);
+        lp.import(def, { silent: true });
+        currentLayoutDef = def;
+        refreshFields();
+      };
+
+      document.getElementById('b-delete').onclick = () => {
+        const id = selectedId();
+        if (!id) return;
+        // No dedicated message; manipulate localStorage in the plugin origin.
+        // The host cannot reach the plugin's localStorage cross-origin, so this
+        // only works when the example is served from the same origin as the plugin.
+        try {
+          const raw =
+            JSON.parse(localStorage.getItem('paperstampLayouts')) || {};
+          delete raw[id];
+          localStorage.setItem('paperstampLayouts', JSON.stringify(raw));
+          log(
+            'info',
+            '→ (local) deleted layout ' + id + ' from paperstampLayouts'
+          );
+          lp.ping(); // refresh list
+        } catch (e) {
+          log('err', 'delete failed: ' + e.message);
+        }
+      };
+
+      document.getElementById('b-opendesigner').onclick = () => {
+        log('info', '→ paperstamp:openDesigner');
+        lp.openDesigner();
+      };
+
+      document.getElementById('b-closedesigner').onclick = () => {
+        log('info', '→ paperstamp:closeDesigner');
+        lp.closeDesigner();
+      };
+
+      document.getElementById('b-preview').onclick = () => {
+        log('info', '→ paperstamp:preview  (current layout)');
+        lp.preview({
+          layoutDef: currentLayoutDef,
+          fieldValues: readFieldValues()
         });
+      };
+
+      document.getElementById('b-print').onclick = () => {
+        log('info', '→ paperstamp:print  (current layout)');
+        lp.print({
+          layoutDef: currentLayoutDef,
+          fieldValues: readFieldValues()
+        });
+      };
+
+      document.getElementById('b-exportfile').onclick = () => {
+        const blob = new Blob([JSON.stringify(currentLayoutDef, null, 2)], {
+          type: 'application/json'
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = (currentLayoutDef.name || 'layout') + '.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+        log('info', 'downloaded ' + a.download);
+      };
+
+      document.getElementById('b-importfile').onclick = () => {
+        document.getElementById('import-file').click();
+      };
+
+      document.getElementById('import-file').onchange = (e) => {
+        const f = e.target.files[0];
+        e.target.value = '';
+        if (!f) return;
+        f.text().then((txt) => {
+          try {
+            const def = JSON.parse(txt);
+            log('info', '→ paperstamp:import  (from file ' + f.name + ')');
+            lp.import(def, { silent: true });
+            currentLayoutDef = def;
+            refreshFields();
+          } catch (err) {
+            log('err', 'import failed: ' + err.message);
+          }
+        });
+      };
+
+      document.getElementById('b-clear').onclick = () => {
+        logEl.replaceChildren();
+      };
+
+      /* ---------- Boot ---------- */
+
+      log(
+        'info',
+        'PaperStamp exerciser ready. sdk version: ' +
+          (PaperStamp.version || '?')
+      );
+      log('info', 'Waiting for paperstamp:ready…');
+      refreshFields();
     </script>
   </body>
 </html>

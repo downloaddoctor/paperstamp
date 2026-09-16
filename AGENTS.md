@@ -30,16 +30,19 @@ core.js
 -> state{items[], nextId, pageWmm, pageHmm, orientation, guideSrc, guideOpacity, selectedId, mode, zoomMode, zoomScale}
 -> deepClone(obj) -> JSON round-trip; exposed on public API for shared snapshot/clone use
 -> render() rebuilds #page items from state.items, keeps #guideImg first; adds interactive hooks when itemHooks.interactive
+-> applyGuideToDom() paints state.guideSrc/guideOpacity onto #guideImg; used by applyLayoutToState + designer's syncGuideDom
 -> applyPageSize() sets #page mm size + injects @page rule; orientation swaps w/h
 -> fitPageToStage() scales #page; emit('fit', {scale, mode})
 -> sanitizeLayoutDef()/sanitizeItem() validate+coerce host layoutDef; {ok:false, errors[]} on fail
--> applyLayoutToState() applies def + fieldValues; applyValidatedLayoutToState() = sanitize + apply
+-> applyLayoutToState() applies def + fieldValues; also applies+paints guideSrc/guideOpacity if def carries them (host preview, previewById)
+-> applyValidatedLayoutToState() = sanitize + re-attach guide fields (sanitizeLayoutDef strips them) + apply
 -> printLayout(layoutId) / printStateless(def) -> validate + triggerPrint (2x rAF -> window.print); emitError on fail
 -> registerLayoutDef() upserts into paperstampLayouts
 -> listLayouts/getAllLayouts/setAllLayouts -> localStorage
 -> loadDesigner() fetches designer.css + designer.js, adds body.designer-mode; idempotent; isDesignerLoaded() reflects completion
 -> on/emit -> internal event bus (designer subscribes via core.on)
--> MESSAGE_HANDLERS map -> paperstamp:ping|preview|print|printById|register|openDesigner|closeDesigner
+-> MESSAGE_HANDLERS map -> paperstamp:ping|preview|previewById|print|printById|register|openDesigner|closeDesigner|listLayoutDefs
+
 -> itemHooks{interactive, onPointerDown, onResizePointerDown, onDblClick} installed by designer
 
 designer.js
@@ -127,10 +130,12 @@ afterprint -> emitDone(); window.close() only if autoPrintTriggered && !embed &&
 designer:close event -> teardown removes injected nodes
 
 # HOST-INTEGRATION
-host -> plugin: paperstamp:print | paperstamp:printById | paperstamp:preview | paperstamp:register | paperstamp:ping | paperstamp:openDesigner | paperstamp:closeDesigner | paperstamp:export | paperstamp:import
+host -> plugin: paperstamp:print | paperstamp:printById | paperstamp:preview | paperstamp:previewById | paperstamp:register | paperstamp:ping | paperstamp:openDesigner | paperstamp:closeDesigner | paperstamp:export | paperstamp:listLayoutDefs | paperstamp:import
+
 paperstamp:preview -> applyValidatedLayoutToState(silent) without triggerPrint (live preview)
 paperstamp:openDesigner -> loadDesigner(); paperstamp:closeDesigner -> emit('designer:close')
-plugin -> host: paperstamp:ready {version, layouts[]} | paperstamp:done | paperstamp:error {code, message}
+plugin -> host: paperstamp:ready {version, layouts[], layoutDefs{}} | paperstamp:done | paperstamp:error {code, message} | paperstamp:layoutDefs {layouts{}}
+
 error codes: E_BAD_MESSAGE, E_NO_LAYOUT, E_BAD_LAYOUT_DEF
 ready emitted on load (2x rAF), after register, on ping
 item.text set via textContent -> no HTML injection
@@ -152,6 +157,8 @@ error codes: E_BAD_ORIGIN E_BAD_MESSAGE E_BAD_LAYOUT_DEF E_NO_LAYOUT E_PRINT_BLO
 
 # STORAGE
 paperstampLayouts capped at MAX_LAYOUTS=100 (LRU evict on overflow, timestamps in paperstampLayoutsLru)
+paperstampLayouts entries include guideSrc/guideOpacity (designer save/load only; exportLayoutDef/importLayoutDef omit guide fields)
+previewById/preview render the guide too: core reads guideSrc/guideOpacity off the layoutDef if present and paints via applyGuideToDom()
 paperstampLayoutsMeta -> SCHEMA_VERSION for future migration
 sanitizeLayoutDef renumbers duplicate item ids before returning ok=true
 afterprint window.close() only when EMBED or running inside an iframe (never closes a standalone tab)
