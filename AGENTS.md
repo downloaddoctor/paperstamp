@@ -4,7 +4,7 @@ paperstamp: static browser layout designer. core.js renders a layoutDef onto a p
 # DIRECTORY
 index.html -> host page: full-bleed iframe on sdk.html; embed({autoShow:false}).openDesigner() on ready
 sdk.html -> embed/print runtime entry: app shell + core.js only, no auto-designer; designer mounts on request
-style.css -> base, item, print, silent-mode chrome hiding (no designer chrome)
+style.css -> base, item, print, designer-mode infinite-canvas rules (no designer chrome)
 core.js -> preview + print runtime, host protocol, designer lazy-loader; exposes window.PaperStampCore + window.PaperStamp
 designer.html -> designer markup as `<template id="ps-designer-root">`; fetched + injected on demand
 designer.css -> designer chrome styles, loaded alongside designer.js
@@ -20,7 +20,7 @@ app.js -> legacy monolith, unreferenced by any entry
 index.html -> host page; embeds sdk.html full-bleed, calls openDesigner() on ready
 sdk.html -> embed/print runtime, no build step; chrome-free until loadDesigner() called
 sdk.html?design=1 -> loads designer on boot
-sdk.html?layoutId=&data=<json>&silent=0|1 -> auto printLayout on boot
+sdk.html?layoutId=&data=<json> -> auto printLayout on boot
 SDK embed() -> autoShow (default true): on ready sends preview(defaultLayout) else printById(layoutId); openDesigner() lazy-loads designer into iframe
 no auto-close: plugin never calls window.close() (host owns iframe lifecycle)
 
@@ -111,7 +111,7 @@ PaperStamp.on/emit -> event bus
 PaperStamp.itemHooks -> designer attaches handlers here
 PaperStamp.deepClone(obj) -> JSON round-trip clone
 PaperStamp.version -> '1'
-URL ?layoutId=&data=<json>&silent=0|1 -> auto printLayout (silent default true)
+URL ?layoutId=&data=<json> -> auto printLayout on boot
 URL ?design=1 -> loadDesigner() on boot
 (removed) no ?embed param; sdk.html is always the embed runtime, chrome-free until loadDesigner()
 caveat: window.print() always opens native dialog; bypass needs Chrome --kiosk-printing or Electron host
@@ -142,7 +142,7 @@ pan inputs (designer): left-drag empty bg | middle-mouse drag | Space+left-drag 
 zoom inputs (designer): Ctrl/Cmd+wheel = pointer-anchored zoom via api.zoomAt; zoom buttons + Fit recenter page in infinite mode
 Fit button in infinite mode: computeFitScale -> centerPage -> applyCanvasTransform (keeps page clear of floating chrome via 120px x-pad / 48px top / 132px bottom insets)
 embed/sdk.html: no infinite canvas — #stage stays bounded-scroll with safe-center flex; setInfiniteCanvas(false) on designer:close restores it
-body.silent-mode -> hides modePill/zoomBar/toolRail/popovers (transient, set during silent print)
+
 body.designer-mode -> chrome visible; set by designer.js init(), removed on designer:close
 afterprint -> emitDone(); no window.close() — host owns iframe lifecycle
 designer:close event -> teardown removes injected nodes; window.PaperStampDesigner.init exposed so loadDesigner() can rebuild them on reopen
@@ -150,7 +150,7 @@ designer:close event -> teardown removes injected nodes; window.PaperStampDesign
 # HOST-INTEGRATION
 host -> plugin: paperstamp:print | paperstamp:printById | paperstamp:preview | paperstamp:previewById | paperstamp:register | paperstamp:ping | paperstamp:openDesigner | paperstamp:closeDesigner | paperstamp:export | paperstamp:listLayoutDefs | paperstamp:import
 
-paperstamp:preview -> applyValidatedLayoutToState(silent) without triggerPrint (live preview)
+paperstamp:preview -> applyValidatedLayoutToState without triggerPrint (live preview)
 paperstamp:openDesigner -> loadDesigner(); paperstamp:closeDesigner -> emit('designer:close')
 plugin -> host: paperstamp:ready {version, layouts[], layoutDefs{}} | paperstamp:done | paperstamp:error {code, message} | paperstamp:layoutDefs {layouts{}}
 
@@ -163,7 +163,7 @@ none — pure static client-side (no build, no server, no deps)
 runtime config via URL params on sdk.html:
   ?design=1 load designer on boot
   ?hostOrigin=<origin> trusted postMessage origin (overrides document.referrer)
-  ?layoutId=&data=<json>&silent=0|1 auto printLayout on boot
+  ?layoutId=&data=<json> auto printLayout on boot
 
 # SECURITY
 post() sends to TRUSTED_ORIGIN (hostOrigin > referrer origin > '*')

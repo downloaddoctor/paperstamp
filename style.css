@@ -40,15 +40,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* body.silent-mode is applied when a layout is applied without designer chrome. */
-
-body.silent-mode #modePill,
-body.silent-mode #zoomBar,
-body.silent-mode #toolRail,
-body.silent-mode .tool-popover {
-  display: none !important;
-}
-
 /* ---------- Stage ---------- */
 
 #stage {

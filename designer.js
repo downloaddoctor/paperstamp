@@ -691,10 +691,7 @@
       notify('Layout not found.');
       return;
     }
-    core.applyLayoutToState(data, null, id, { silent: false });
-    state.guideSrc = data.guideSrc || '';
-    state.guideOpacity =
-      typeof data.guideOpacity === 'number' ? data.guideOpacity : 60;
+    core.applyLayoutToState(data, null, id);
     syncGuideDom();
     syncPageSetupInputs();
     setMode('design');
@@ -999,7 +996,7 @@
           el.importLayoutFile.value = '';
           return;
         }
-        const result = core.importLayoutDef(def, { silent: false });
+        const result = core.importLayoutDef(def);
         if (!result.ok) {
           notify('Import failed: ' + result.errors.join('; '));
           el.importLayoutFile.value = '';

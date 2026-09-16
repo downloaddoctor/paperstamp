@@ -451,7 +451,7 @@
           paperstamp:print &mdash; print an arbitrary layoutDef (stateless)
         </summary>
         <pre>
-{ type:'paperstamp:print', layoutDef:{...}, fieldValues:{...}, options:{ silent:false } }</pre
+{ type:'paperstamp:print', layoutDef:{...}, fieldValues:{...}, options:{ persist:false } }</pre
         >
         <p>
           Opens the browser print dialog. Nothing persisted unless
@@ -509,7 +509,7 @@
           layoutDef
         </summary>
         <pre>
-{ type:'paperstamp:import', layoutDef:{...}, options:{ silent:false } }</pre
+{ type:'paperstamp:import', layoutDef:{...} }</pre
         >
       </details>
 
@@ -764,7 +764,7 @@
         }
         const def = savedLayouts[id];
         log('info', '→ paperstamp:import  id=' + id);
-        lp.import(def, { silent: true });
+        lp.import(def);
         currentLayoutDef = def;
         refreshFields();
       };
@@ -843,7 +843,7 @@
           try {
             const def = JSON.parse(txt);
             log('info', '→ paperstamp:import  (from file ' + f.name + ')');
-            lp.import(def, { silent: true });
+            lp.import(def);
             currentLayoutDef = def;
             refreshFields();
           } catch (err) {
