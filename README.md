@@ -22,18 +22,18 @@ Pure static HTML/CSS/JS. No server, no build step, no npm.
 
 ## Files
 
-| File | Purpose |
-|------|---------|
-| `index.html` | Designer-first entry (loads the designer on boot) |
-| `sdk.html` | Embed/print runtime (no designer chrome) |
-| `core.js` | Preview + print runtime, host protocol |
-| `designer.html` / `designer.css` / `designer.js` | Lazy-loaded designer UI |
-| `sdk.js` | Host-side UMD wrapper (`PaperStamp.embed()`) |
-| `example.html` | Runnable SDK demo |
-| `PLUGIN.md` | Authoritative embedding contract |
-| `INTEGRATION.md` | Use it from another project (hosted or vendored) |
-| `llms.txt` | Machine-readable summary for LLMs |
-| `AGENTS.md` | Architecture notes |
+| File                                             | Purpose                                                                |
+| ------------------------------------------------ | ---------------------------------------------------------------------- |
+| `index.html`                                     | Designer entry — host page that embeds sdk.html and opens the designer |
+| `sdk.html`                                       | Embed/print runtime (no designer chrome)                               |
+| `core.js`                                        | Preview + print runtime, host protocol                                 |
+| `designer.html` / `designer.css` / `designer.js` | Lazy-loaded designer UI                                                |
+| `sdk.js`                                         | Host-side UMD wrapper (`PaperStamp.embed()`)                           |
+| `example.html`                                   | Runnable SDK demo                                                      |
+| `PLUGIN.md`                                      | Authoritative embedding contract                                       |
+| `INTEGRATION.md`                                 | Use it from another project (hosted or vendored)                       |
+| `llms.txt`                                       | Machine-readable summary for LLMs                                      |
+| `AGENTS.md`                                      | Architecture notes                                                     |
 
 ## Use it from another project
 
@@ -59,18 +59,30 @@ Open `index.html` in a browser. Add text, drag it onto the page, print.
 <script>
   const lp = PaperStamp.embed({
     onReady: ({ layouts }) => console.log('ready', layouts),
-    onDone:  (job)       => console.log('printed', job),
-    onError: (err)       => console.error(err.code, err.message)
+    onDone: (job) => console.log('printed', job),
+    onError: (err) => console.error(err.code, err.message)
   });
 
   lp.print({
     layoutDef: {
-      pageWmm: 210, pageHmm: 297, orientation: 'portrait',
-      items: [{
-        id: 1, type: 'text', x: 10, y: 10, w: 60, h: 8,
-        text: 'Name', name: 'name', fontSize: 14,
-        align: 'left', valign: 'top'
-      }]
+      pageWmm: 210,
+      pageHmm: 297,
+      orientation: 'portrait',
+      items: [
+        {
+          id: 1,
+          type: 'text',
+          x: 10,
+          y: 10,
+          w: 60,
+          h: 8,
+          text: 'Name',
+          name: 'name',
+          fontSize: 14,
+          align: 'left',
+          valign: 'top'
+        }
+      ]
     },
     fieldValues: { name: 'Jane Doe' }
   });

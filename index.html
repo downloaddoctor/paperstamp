@@ -10,22 +10,42 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="style.css" />
-    <style id="pageSizeStyle"></style>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #f5f6f9;
+      }
+      #host {
+        position: fixed;
+        inset: 0;
+      }
+      #host iframe {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+    </style>
   </head>
   <body>
-    <div id="stage">
-      <div id="pageViewport">
-        <div id="page">
-          <img id="guideImg" alt="" />
-        </div>
-      </div>
-    </div>
-    <script src="core.js"></script>
+    <div id="host"></div>
+    <script src="sdk.js"></script>
     <script>
-      // Designer-first entry: always load the designer UI on boot.
-      window.addEventListener('DOMContentLoaded', function () {
-        window.PaperStamp.loadDesigner();
+      // Host page: embed the plugin full-bleed and open the designer on ready.
+      const lp = PaperStamp.embed({
+        container: document.getElementById('host'),
+        width: '100%',
+        height: '100%',
+        position: 'static',
+        hidden: false,
+        autoShow: false,
+        onReady: function () {
+          lp.openDesigner();
+        }
       });
     </script>
   </body>

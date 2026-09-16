@@ -2,8 +2,8 @@
 paperstamp: static browser layout designer. core.js renders a layoutDef onto a page-sized canvas and prints at exact positions onto pre-printed forms; designer.* adds editing chrome and is lazy-loaded on demand.
 
 # DIRECTORY
-index.html -> designer-first entry: app shell + #page canvas; auto loadDesigner() on boot
-sdk.html -> embed/print runtime entry: app shell + core.js only, no auto-designer (former index.html)
+index.html -> host page: full-bleed iframe on sdk.html; embed({autoShow:false}).openDesigner() on ready
+sdk.html -> embed/print runtime entry: app shell + core.js only, no auto-designer; designer mounts on request
 style.css -> base, item, print, silent-mode chrome hiding (no designer chrome)
 core.js -> preview + print runtime, host protocol, designer lazy-loader; exposes window.PaperStampCore + window.PaperStamp
 designer.html -> designer markup as `<template id="ps-designer-root">`; fetched + injected on demand
@@ -17,7 +17,7 @@ PLUGIN.md -> authoritative embedding contract
 app.js -> legacy monolith, unreferenced by any entry
 
 # ENTRY-POINTS
-index.html -> designer-first; auto-loads designer on boot
+index.html -> host page; embeds sdk.html full-bleed, calls openDesigner() on ready
 sdk.html -> embed/print runtime, no build step; chrome-free until loadDesigner() called
 sdk.html?design=1 -> loads designer on boot
 sdk.html?layoutId=&data=<json>&silent=0|1 -> auto printLayout on boot
