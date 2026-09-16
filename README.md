@@ -4,6 +4,14 @@ A tiny, dependency-free, build-free layout designer and print runtime for the br
 
 Pure static HTML/CSS/JS. No server, no build step, no npm.
 
+## Live demo
+
+| Try it                       | URL                                                      |
+| ---------------------------- | -------------------------------------------------------- |
+| **Designer** (standalone)    | https://downloaddoctor.github.io/paperstamp/             |
+| **SDK demo** (embed example) | https://downloaddoctor.github.io/paperstamp/example.html |
+| **Embed runtime** (sdk.html) | https://downloaddoctor.github.io/paperstamp/sdk.html     |
+
 ## What it does
 
 - **Design mode** — drag, resize, align, and style text items on a page-sized canvas (A4, Letter, Legal, or custom mm).
@@ -54,7 +62,7 @@ Open `index.html` in a browser. Add text, drag it onto the page, print.
 </script>
 ```
 
-See [`PLUGIN.md`](PLUGIN.md) for the full protocol and [`example.html`](example.html) for a live demo.
+See [PLUGIN.md](https://github.com/downloaddoctor/paperstamp/blob/main/PLUGIN.md) for the full protocol and the [live SDK demo](https://downloaddoctor.github.io/paperstamp/example.html).
 
 ## Notes
 
