@@ -3,13 +3,13 @@ paperstamp: static browser layout designer. core.js renders a layoutDef onto a p
 
 # DIRECTORY
 index.html -> designer-first entry: app shell + #page canvas; auto loadDesigner() on boot
-sdk.html -> embed/print runtime entry: app shell + core.js only (former index.html)
-style.css -> base, item, print, silent-mode, embed-mode chrome hiding (no designer chrome)
+sdk.html -> embed/print runtime entry: app shell + core.js only, no auto-designer (former index.html)
+style.css -> base, item, print, silent-mode chrome hiding (no designer chrome)
 core.js -> preview + print runtime, host protocol, designer lazy-loader; exposes window.PaperStampCore + window.PaperStamp
 designer.html -> designer markup as `<template id="ps-designer-root">`; fetched + injected on demand
 designer.css -> designer chrome styles, loaded alongside designer.js
 designer.js -> fetches designer.html, imports template into body, caches els, wires events; IIFE
-sdk.js -> UMD host wrapper; PaperStamp.embed() auto-derives sdk.html?embed=1, hidden iframe + postMessage bridge; autoShow on ready via defaultLayout|layoutId
+sdk.js -> UMD host wrapper; PaperStamp.embed() auto-derives sdk.html, hidden iframe + postMessage bridge; autoShow on ready via defaultLayout|layoutId; openDesigner() lazy-loads designer into iframe
 example.html -> SDK demo (50/50 split: controls left, live preview iframe right via preview()); embed({autoShow:false})
 PLUGIN.md -> authoritative embedding contract
 .prettierrc -> prettier config (singleQuote, lf, no trailing comma)
@@ -18,12 +18,11 @@ app.js -> legacy monolith, unreferenced by any entry
 
 # ENTRY-POINTS
 index.html -> designer-first; auto-loads designer on boot
-sdk.html -> embed/print runtime, no build step
-sdk.html?embed=1 -> silent + embed chrome hiding, suppresses window.close(); page stays blank until first layout (preview/print/printById)
+sdk.html -> embed/print runtime, no build step; chrome-free until loadDesigner() called
 sdk.html?design=1 -> loads designer on boot
 sdk.html?layoutId=&data=<json>&silent=0|1 -> auto printLayout on boot
-revealPage() -> adds body.paperstamp-ready on first layout in EMBED; CSS hides #pageViewport until then
-SDK embed() -> autoShow (default true): on ready sends preview(defaultLayout) else printById(layoutId)
+SDK embed() -> autoShow (default true): on ready sends preview(defaultLayout) else printById(layoutId); openDesigner() lazy-loads designer into iframe
+no auto-close: plugin never calls window.close() (host owns iframe lifecycle)
 
 # MODULES
 core.js
@@ -66,7 +65,7 @@ guide upload -> FileReader -> dataURL -> #guideImg (screen-only)
 add item -> state.items -> render()
 drag/resize -> item x/y/w/h % -> live DOM update + geometry input sync
 Print -> window.print() -> print CSS hides chrome + guide
-host embed -> SDK hidden iframe -> index.html -> emitReady() -> onReady({version, layouts})
+host embed -> SDK hidden iframe -> sdk.html -> emitReady() -> onReady({version, layouts})
 host print/register -> postMessage -> core.js MESSAGE_HANDLERS -> print/registerLayoutDef -> afterprint -> emitDone()
 designer open -> loadDesigner() -> fetch designer.html + designer.css + designer.js -> buildDom() injects template -> designer-mode
 
@@ -103,7 +102,7 @@ PaperStamp.deepClone(obj) -> JSON round-trip clone
 PaperStamp.version -> '1'
 URL ?layoutId=&data=<json>&silent=0|1 -> auto printLayout (silent default true)
 URL ?design=1 -> loadDesigner() on boot
-URL ?embed=1 -> silent+embed chrome hiding, suppresses window.close()
+(removed) no ?embed param; sdk.html is always the embed runtime, chrome-free until loadDesigner()
 caveat: window.print() always opens native dialog; bypass needs Chrome --kiosk-printing or Electron host
 notify/confirm UI -> #psToast + #psConfirm, defined in designer.js, hidden in print
 full contract: see PLUGIN.md
@@ -124,12 +123,11 @@ mode design|fill -> guards in onItemPointerDown/onResizePointerDown/dblclick
 geometry inputs -> clamp to page bounds, sync with drag/resize
 snap-to-center: within 1% of page center
 keys: Esc deselect/close, Ctrl+D dup, arrows nudge (0.2%), Del removes
-Ctrl/Cmd + wheel over #stage -> api.setZoomScale(base ± 0.05); disabled in embed mode
+Ctrl/Cmd + wheel over #stage -> api.setZoomScale(base ± 0.05)
 #stage scroll -> repositions #itemToolbar + #wBadge/#hBadge for selected item
-body.silent-mode -> hides modePill/zoomBar/toolRail/popovers
-body.embed-mode -> hides all chrome (?embed=1)
-body.designer-mode -> reverts embed hiding for designer chrome
-afterprint -> emitDone(); window.close() only if autoPrintTriggered && !embed && window.parent !== window (never closes a standalone tab)
+body.silent-mode -> hides modePill/zoomBar/toolRail/popovers (transient, set during silent print)
+body.designer-mode -> chrome visible; set by designer.js init(), removed on designer:close
+afterprint -> emitDone(); no window.close() — host owns iframe lifecycle
 designer:close event -> teardown removes injected nodes; window.PaperStampDesigner.init exposed so loadDesigner() can rebuild them on reopen
 
 # HOST-INTEGRATION
@@ -146,7 +144,6 @@ item.text set via textContent -> no HTML injection
 # ENV
 none — pure static client-side (no build, no server, no deps)
 runtime config via URL params on sdk.html:
-  ?embed=1 silent chrome hiding + blank-until-first-layout
   ?design=1 load designer on boot
   ?hostOrigin=<origin> trusted postMessage origin (overrides document.referrer)
   ?layoutId=&data=<json>&silent=0|1 auto printLayout on boot
@@ -164,10 +161,10 @@ paperstampLayouts entries include guideSrc/guideOpacity (designer save/load only
 previewById/preview render the guide too: core reads guideSrc/guideOpacity off the layoutDef if present and paints via applyGuideToDom()
 paperstampLayoutsMeta -> SCHEMA_VERSION for future migration
 sanitizeLayoutDef renumbers duplicate item ids before returning ok=true
-afterprint window.close() only when EMBED or running inside an iframe (never closes a standalone tab)
+(removed) plugin never calls window.close(); host owns iframe lifecycle
 printStateless/print only persist layoutDef when opts.persist === true; register always persists
 setAllLayouts returns bool; failures surface via notify in designer
 
 # PRINT-LIFECYCLE
 triggerPrint: printInFlight guard (blocks reentry), autoPrintTriggered set, rAF x2 -> window.print() in try/catch
-beforeprint -> printInFlight = true; afterprint -> clear both flags, emitDone, window.close() only if !EMBED
+beforeprint -> printInFlight = true; afterprint -> clear both flags, emitDone (no window.close)

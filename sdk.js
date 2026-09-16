@@ -21,7 +21,7 @@
       return null;
     }
   })();
-  const defaultSrc = () => (SELF_DIR ? SELF_DIR + 'sdk.html?embed=1' : null);
+  const defaultSrc = () => (SELF_DIR ? SELF_DIR + 'sdk.html' : null);
 
   function createInstance(iframe, opts) {
     const inst = {

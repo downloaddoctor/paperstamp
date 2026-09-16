@@ -18,7 +18,7 @@ straight from the live URL — no clone, no npm, no bundler:
 <script src="https://downloaddoctor.github.io/paperstamp/sdk.js"></script>
 ```
 
-`sdk.js` auto-derives its iframe target (`sdk.html?embed=1`) from its own
+`sdk.js` auto-derives its iframe target (`sdk.html`) from its own
 `<script src>`, so no `src` option is required.
 
 ## Source

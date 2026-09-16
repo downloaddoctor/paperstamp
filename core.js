@@ -10,7 +10,6 @@
   const LAYOUTS_META_KEY = 'paperstampLayoutsMeta';
   const LAYOUTS_LRU_KEY = 'paperstampLayoutsLru';
   const params = new URLSearchParams(location.search);
-  const EMBED = params.get('embed') === '1';
   const ALIGN_TO_FLEX = Object.freeze({
     center: 'center',
     right: 'flex-end',
@@ -175,7 +174,7 @@
     }
   }
   const revealPage = () => {
-    if (EMBED && document.body) document.body.classList.add('paperstamp-ready');
+    if (document.body) document.body.classList.add('paperstamp-ready');
   };
   const emitReady = () => {
     post('paperstamp:ready', {
@@ -692,9 +691,6 @@
     autoPrintTriggered = false;
     printInFlight = false;
     emitDone({});
-    // Only self-close when actually running inside a host iframe.
-    // Standalone tabs (e.g. sdk.html?layoutId=... opened directly) must stay open.
-    if (!EMBED && window.parent !== window) window.close();
   });
   /* ---------- Public API ---------- */
 
@@ -759,8 +755,6 @@
     loadDesigner,
     /** @returns {boolean} true once designer.js has finished loading */
     isDesignerLoaded: () => designerLoaded,
-    /** @returns {boolean} */
-    isEmbed: () => EMBED,
     isPrintInFlight: () => printInFlight,
     GEO_CLAMP,
     GEO_STYLE,
@@ -783,11 +777,6 @@
   fitPageToStage();
   window.addEventListener('resize', fitPageToStage);
 
-  if (EMBED) {
-    setSilentMode(true);
-    document.body.classList.add('embed-mode');
-  }
-
   if (params.get('design') === '1') loadDesigner();
 
   (function autoTriggerFromUrl() {
@@ -808,51 +797,47 @@
 
   /* ---------- Mouse zoom (Ctrl/Cmd + wheel) ---------- */
 
-  if (!EMBED) {
-    el.stage.addEventListener(
-      'wheel',
-      (e) => {
-        if (!e.ctrlKey && !e.metaKey) return;
-        e.preventDefault();
-        const base =
-          state.zoomMode === 'fit' ? computeFitScale() : state.zoomScale;
-        api.setZoomScale(base + (e.deltaY < 0 ? 0.05 : -0.05));
-      },
-      { passive: false }
-    );
-  }
+  el.stage.addEventListener(
+    'wheel',
+    (e) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      const base =
+        state.zoomMode === 'fit' ? computeFitScale() : state.zoomScale;
+      api.setZoomScale(base + (e.deltaY < 0 ? 0.05 : -0.05));
+    },
+    { passive: false }
+  );
 
   /* ---------- Pan (click-drag empty canvas to navigate) ---------- */
 
-  if (!EMBED) {
-    let panState = null;
-    el.stage.addEventListener('pointerdown', (e) => {
-      if (e.button !== 0) return;
-      if (
-        e.target !== el.stage &&
-        e.target !== el.page &&
-        e.target !== el.guideImg
-      )
-        return;
-      panState = {
-        x: e.clientX,
-        y: e.clientY,
-        left: el.stage.scrollLeft,
-        top: el.stage.scrollTop
-      };
-      el.stage.classList.add('panning');
-    });
-    window.addEventListener('pointermove', (e) => {
-      if (!panState) return;
-      el.stage.scrollLeft = panState.left - (e.clientX - panState.x);
-      el.stage.scrollTop = panState.top - (e.clientY - panState.y);
-    });
-    window.addEventListener('pointerup', () => {
-      if (!panState) return;
-      panState = null;
-      el.stage.classList.remove('panning');
-    });
-  }
+  let panState = null;
+  el.stage.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    if (
+      e.target !== el.stage &&
+      e.target !== el.page &&
+      e.target !== el.guideImg
+    )
+      return;
+    panState = {
+      x: e.clientX,
+      y: e.clientY,
+      left: el.stage.scrollLeft,
+      top: el.stage.scrollTop
+    };
+    el.stage.classList.add('panning');
+  });
+  window.addEventListener('pointermove', (e) => {
+    if (!panState) return;
+    el.stage.scrollLeft = panState.left - (e.clientX - panState.x);
+    el.stage.scrollTop = panState.top - (e.clientY - panState.y);
+  });
+  window.addEventListener('pointerup', () => {
+    if (!panState) return;
+    panState = null;
+    el.stage.classList.remove('panning');
+  });
 
   requestAnimationFrame(() => requestAnimationFrame(emitReady));
 })();

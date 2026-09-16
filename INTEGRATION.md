@@ -20,7 +20,7 @@ Load the SDK and it wires up the iframe for you:
 <script src="https://downloaddoctor.github.io/paperstamp/sdk.js"></script>
 ```
 
-`sdk.js` derives the plugin URL (`sdk.html?embed=1`) from its own
+`sdk.js` derives the plugin URL (`sdk.html`) from its own
 `<script src>`, so no `src` option is needed.
 
 ---

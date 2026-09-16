@@ -991,7 +991,6 @@
     syncPageSetupInputs();
     render();
     fitPageToStage();
-    document.body.classList.remove('embed-mode');
     document.body.classList.add('designer-mode');
     core.emit('designer:ready', {});
     core.emit('designer:mounted', {});

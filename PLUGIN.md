@@ -1,6 +1,6 @@
 # paperstamp — Plugin / Embedding Contract
 
-`paperstamp` is a static client-side page. Embed it as an `<iframe>` in any host that needs to render a layout with data and trigger printing. No build step, no server — point an iframe at `sdk.html` and talk via `postMessage` (or the optional `sdk.js` wrapper). `index.html` is the standalone designer entry; `sdk.html` is the embed/print runtime.
+`paperstamp` is a static client-side page. Embed it as an `<iframe>` in any host that needs to render a layout with data and trigger printing. No build step, no server — point an iframe at `sdk.html` and talk via `postMessage` (or the optional `sdk.js` wrapper). `sdk.html` is the embed/print runtime and ships chrome-free; call `openDesigner()` to mount the editing UI on demand. `index.html` is the standalone designer entry — same page, but it auto-loads the designer on boot.
 
 ---
 
@@ -9,7 +9,7 @@
 - **layoutDef** — self-contained layout object: page size, orientation, items. What a host sends.
 - **layoutId** — name of a layout saved in the plugin's `localStorage` (`paperstampLayouts`). Usable only when host and iframe share an origin, or after the host pre-registers it.
 - **fieldValues** — `{ [item.name]: value }`. Applied to items whose `name` matches; `item.text` becomes `String(value)`. Unmatched items keep their design-time text.
-- **silent** — default `true`; hides all designer chrome (`body.silent-mode`) before printing. Does **not** bypass the browser print dialog.
+- **silent** — default `true`; hides all designer chrome (`body.silent-mode`) before printing. Does **not** bypass the browser print dialog. Only meaningful when the designer is loaded; otherwise the plugin has no chrome to hide.
 
 ---
 
@@ -136,16 +136,16 @@ Error codes
 
 The plugin ships in two layers:
 
-- **`core.js` + `style.css`** — always loaded. Renders a `layoutDef`, applies `fieldValues`, prints, and speaks the host protocol. No editing chrome.
+- **`core.js` + `style.css`** — always loaded. Renders a `layoutDef`, applies `fieldValues`, prints, and speaks the host protocol. No editing chrome; chrome lives only in `designer.css`/`designer.html`.
 - **`designer.html` + `designer.js` + `designer.css`** — loaded on demand. `designer.html` holds the markup as a `<template id="ps-designer-root">`; `designer.js` fetches it, imports the template content into the page, then wires events. Adds the full editing UI (page setup, guide image, item toolbar, zoom, fill mode, layout save/load, keyboard shortcuts).
 
 The designer can be pulled in three ways:
 
-1. URL param: `sdk.html?design=1` (works alongside `?embed=1`; embed hiding is overridden once the designer mounts). The standalone designer at `index.html` loads the designer unconditionally.
+1. URL param: `sdk.html?design=1`. The standalone designer at `index.html` loads the designer unconditionally on boot.
 2. Host message: `postMessage({ type: 'paperstamp:openDesigner' })`.
 3. SDK method: `lp.openDesigner()`.
 
-When the designer is active on an embedded iframe, `body.embed-mode` stays set but is overridden by `body.designer-mode` — designer chrome becomes visible again. Closing via `paperstamp:closeDesigner` / `lp.closeDesigner()` removes the injected DOM and re-applies the embed hiding.
+There is no `?embed=1` and no `body.embed-mode` — `sdk.html` is always the embed runtime, and it ships chrome-free until the designer is loaded. Loading the designer adds `body.designer-mode`; chrome comes from `designer.html` + `designer.css` (which are only fetched at that point). Closing via `paperstamp:closeDesigner` / `lp.closeDesigner()` removes the injected DOM and drops `designer-mode`.
 
 `lp.isDesignerLoaded()` returns a boolean (also exposed as `PaperStampCore.isDesignerLoaded()` inside the plugin).
 
@@ -157,7 +157,7 @@ When the designer is active on an embedded iframe, `body.embed-mode` stays set b
 <script src="sdk.js"></script>
 ```
 
-No `src` needed: the SDK derives `sdk.html?embed=1` from its own `<script src>`.
+No `src` needed: the SDK derives `sdk.html` from its own `<script src>`.
 
 ### 5.1 `PaperStamp.embed(opts) -> instance`
 
@@ -171,7 +171,7 @@ No `src` needed: the SDK derives `sdk.html?embed=1` from its own `<script src>`.
 | `onDone(job)`      | fn             | Fires when the plugin's print dialog closes.                             |
 | `onError(err)`     | fn             | `err = { code, message, job }`.                                          |
 
-Appending `?embed=1` is recommended: hides all designer chrome.
+The plugin ships chrome-free; the designer is only loaded on explicit request via `lp.openDesigner()`. No URL param needed.
 
 ### 5.2 Instance methods
 
@@ -251,7 +251,7 @@ sdk.html?layoutId=<id>&data=<urlencoded JSON>&silent=0|1
 - True silent printing needs one of: Chrome/Edge with `--kiosk-printing`, or an Electron/CEF/WebView host exposing a native print API.
 - The plugin injects a dynamic `@page { size: <W>mm <H>mm; margin: 0 }` rule so paper size matches the layout.
 - `@media print` in `style.css` hides designer chrome and the guide image; only `#page` prints.
-- When print is programmatic (message or URL param), the plugin sets an internal flag and calls `window.close()` on `afterprint`. When embedded, either host the plugin in a dedicated iframe you recreate on `paperstamp:done`, or pass `options.silent === false` to keep it open.
+- The plugin never calls `window.close()`. The host owns the iframe lifecycle: recreate or remove the iframe on `paperstamp:done`. If you need a persistent embed, simply leave it in place.
 
 ---
 
