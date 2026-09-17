@@ -18,7 +18,6 @@ example.html -> SDK demo (50/50 split: controls left, live preview iframe right 
 PLUGIN.md -> authoritative embedding contract
 .prettierrc -> prettier config (singleQuote, lf, no trailing comma)
 .prettierignore -> prettier exclusions (AGENTS.md)
-app.js -> legacy monolith, unreferenced by any entry
 
 # ENTRY-POINTS
 index.html -> host page; embeds sdk.html full-bleed, calls openDesigner() on ready
@@ -100,8 +99,10 @@ wireEvents scopes rail-btn/tool-popover queries to el.chrome (#psDesignerChrome)
 designer markup -> designer.html `<template id="ps-designer-root">`; injected nodes tagged [data-paperstamp-designer]
 designer.css link + designer.js script tags in <head> use separate [data-paperstamp-designer-asset] attr, excluded from designer:close teardown so CSS survives reopen
 
-# PRODUCTION
-see PRODUCTION.md for audit + browser matrix + operator checklist
+# INTEGRATION
+see INTEGRATION.md for embedding via live GitHub Pages URLs (sdk.js, sdk.html, example.html), no clone/npm/bundler required
+README.md -> project overview + live demo links (same URLs as INTEGRATION.md)
+llms.txt -> LLM-oriented project summary + live URLs
 
 # PUBLIC-API
 PaperStamp = PaperStampCore (core.js)
