@@ -43,7 +43,7 @@ core.js
 -> render() calls applyItemFontPx per item
 -> fitPageToStage() infinite: centerPage + applyPageGeometry; embed: #page transform scale + #pageViewport px size (unchanged from before)
 -> centerPage() centers the scaled page inside #stage (infinite mode only)
--> setInfiniteCanvas(on) toggles infinite canvas; on=false clears #pageViewport transform + #page left/top + zeroes pan; then applyPageSize + fitPageToStage
+-> setInfiniteCanvas(on) toggles infinite canvas; on=false clears #pageViewport transform + #page left/top + zeroes pan + resets zoom (zoomMode='fit', zoomScale=1) + re-applies item fonts at z=1 (undo designer zoom-baked font-size); then applyPageSize + fitPageToStage
 -> setPan(x,y) / panBy(dx,dy) mutate panX/panY + applyPageGeometry
 -> zoomAt(clientX, clientY, scale) pointer-anchored zoom; keeps page point under cursor fixed; sets zoomMode='manual'
 -> clientToPage(clientX, clientY) -> {x,y} in unscaled page-local px (inverse of the canvas transform)

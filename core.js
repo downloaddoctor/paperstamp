@@ -384,6 +384,16 @@
       el.page.style.top = '';
       state.panX = 0;
       state.panY = 0;
+      /* Reset zoom so the embed/preview view refits at 100%, not the last
+         designer zoom level. */
+      state.zoomMode = 'fit';
+      state.zoomScale = 1;
+      /* Re-apply item fonts at z=1 — designer mode baked the on-screen zoom
+         into inline font-size px, so leaving it would keep zoomed sizes. */
+      for (const item of state.items) {
+        const node = getItemNode(item.id);
+        if (node) applyItemFontPx(item, node);
+      }
     }
     applyPageSize();
     fitPageToStage();
