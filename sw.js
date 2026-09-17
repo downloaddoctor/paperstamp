@@ -162,20 +162,20 @@ function isFontRequest(url) {
   return FONT_HOSTS.includes(url.hostname);
 }
 
-/* On navigation (page reload): check the sentinel; if changed, HEAD-diff every
-   shell asset and refetch only the changed ones, then serve network-first. */
+/* On navigation: serve the cached document immediately (non-blocking first
+   paint), refreshing that cache entry from the network in the background.
+   Update detection is separate — see checkForUpdates(). */
 async function handleNavigation(request) {
-  try {
-    const remote = await fetchSentinelValidator();
-    if (remote) {
-      const stored = await readStoredValidator();
-      if (stored !== remote) {
-        await refreshChangedAssets();
-        await writeStoredValidator(remote);
-      }
-    }
-  } catch (err) {
-    /* Sentinel check must never block navigation. */
+  const cached = await caches.match(request);
+  if (cached) {
+    fetch(request)
+      .then((fresh) => {
+        if (fresh && fresh.ok) {
+          caches.open(SHELL_CACHE).then((cache) => cache.put(request, fresh));
+        }
+      })
+      .catch(() => {});
+    return cached;
   }
 
   try {
@@ -184,13 +184,35 @@ async function handleNavigation(request) {
     cache.put(request, fresh.clone());
     return fresh;
   } catch (err) {
-    const cached =
-      (await caches.match(request)) ||
-      (await caches.match('./index.html')) ||
-      (await caches.match('./'));
-    if (cached) return cached;
+    const fallback =
+      (await caches.match('./index.html')) || (await caches.match('./'));
+    if (fallback) return fallback;
     throw err;
   }
+}
+
+/* Background update check, run via event.waitUntil so it never delays the
+   navigation response. HEADs the AGENTS.md sentinel; if changed, HEAD-diffs
+   shell assets, refetches the changed ones, then tells the requesting
+   client to reload so it picks up the fresh version. */
+async function checkForUpdates(clientId) {
+  let remote;
+  try {
+    remote = await fetchSentinelValidator();
+  } catch (err) {
+    return;
+  }
+  if (!remote) return;
+
+  const stored = await readStoredValidator();
+  if (stored === remote) return;
+
+  await refreshChangedAssets();
+  await writeStoredValidator(remote);
+
+  if (!clientId) return;
+  const client = await self.clients.get(clientId);
+  if (client) client.postMessage({ type: 'paperstamp-update-ready' });
 }
 
 /* Static local assets: cache-first. */
@@ -229,6 +251,7 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     event.respondWith(handleNavigation(request));
+    event.waitUntil(checkForUpdates(event.clientId));
     return;
   }
 

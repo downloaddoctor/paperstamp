@@ -10,9 +10,9 @@ designer.html -> designer markup as `<template id="ps-designer-root">`; fetched 
 designer.css -> designer chrome styles, loaded alongside designer.js
 designer.js -> fetches designer.html, imports template into body, caches els, wires events; IIFE
 sdk.js -> UMD host wrapper; PaperStamp.embed() auto-derives sdk.html, hidden iframe + postMessage bridge; autoShow on ready via defaultLayout|layoutId; openDesigner() lazy-loads designer into iframe
-sw.js -> service worker: precaches app shell, cache-first local, network-first navigation, best-effort opaque font cache; AGENTS.md sentinel (HEAD on reload); when changed, HEAD-diff each shell asset and refetch only the changed ones (per-file ETag/Last-Modified in paperstamp-meta)
+sw.js -> service worker: precaches app shell, cache-first local + cache-first navigation (instant load, background revalidate), best-effort opaque font cache; AGENTS.md sentinel HEAD-checked in background via event.waitUntil (never blocks nav response); when changed, HEAD-diff each shell asset, refetch only the changed ones (per-file ETag/Last-Modified in paperstamp-meta), then postMessage('paperstamp-update-ready') to the requesting client
 manifest.webmanifest -> PWA manifest: start_url ./index.html, scope ./, standalone, favicon.svg any+maskable
-pw.js -> PWA bootstrap loaded by every page; registers ./sw.js on load, no-op if unsupported
+pw.js -> PWA bootstrap loaded by every page; registers ./sw.js on load, no-op if unsupported; on SW message {type:'paperstamp-update-ready'} does window.location.reload()
 # PWA-RULE: AGENTS.md is the sw.js cache sentinel. Touch AGENTS.md on EVERY commit that changes a cached asset, or the shell will not refresh.
 example.html -> SDK demo (50/50 split: controls left, live preview iframe right via preview()); embed({autoShow:false})
 PLUGIN.md -> authoritative embedding contract
