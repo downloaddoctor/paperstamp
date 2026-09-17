@@ -10,6 +10,10 @@ designer.html -> designer markup as `<template id="ps-designer-root">`; fetched 
 designer.css -> designer chrome styles, loaded alongside designer.js
 designer.js -> fetches designer.html, imports template into body, caches els, wires events; IIFE
 sdk.js -> UMD host wrapper; PaperStamp.embed() auto-derives sdk.html, hidden iframe + postMessage bridge; autoShow on ready via defaultLayout|layoutId; openDesigner() lazy-loads designer into iframe
+sw.js -> service worker: precaches app shell, cache-first local, network-first navigation, best-effort opaque font cache; AGENTS.md sentinel (HEAD on reload); when changed, HEAD-diff each shell asset and refetch only the changed ones (per-file ETag/Last-Modified in paperstamp-meta)
+manifest.webmanifest -> PWA manifest: start_url ./index.html, scope ./, standalone, favicon.svg any+maskable
+pw.js -> PWA bootstrap loaded by every page; registers ./sw.js on load, no-op if unsupported
+# PWA-RULE: AGENTS.md is the sw.js cache sentinel. Touch AGENTS.md on EVERY commit that changes a cached asset, or the shell will not refresh.
 example.html -> SDK demo (50/50 split: controls left, live preview iframe right via preview()); embed({autoShow:false})
 PLUGIN.md -> authoritative embedding contract
 .prettierrc -> prettier config (singleQuote, lf, no trailing comma)
@@ -164,7 +168,7 @@ ready emitted on load (2x rAF), after register, on ping
 item.text set via textContent -> no HTML injection
 
 # ENV
-none — pure static client-side (no build, no server, no deps)
+none — pure static client-side (no build, no server, no deps); PWA via sw.js + manifest.webmanifest + pw.js (install + offline shell)
 runtime config via URL params on sdk.html:
   ?design=1 load designer on boot
   ?layoutId=&data=<json> auto printLayout on boot

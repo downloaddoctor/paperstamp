@@ -1,0 +1,25 @@
+{
+  "name": "PaperStamp — Layout Designer & Print Runtime",
+  "short_name": "PaperStamp",
+  "description": "Design forms, bind data, print at exact positions onto pre-printed paper. Static, dependency-free, works offline.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5f6f9",
+  "theme_color": "#3454d1",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
