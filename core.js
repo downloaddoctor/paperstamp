@@ -316,10 +316,14 @@
     emit('fit', { scale: z, mode: state.zoomMode });
   }
 
-  /* Font size in px at the current zoom, so text renders crisp. */
+  /* Font size in px at the current zoom, so text renders crisp.
+     Also store the unzoomed physical size in --ps-fs; @media print uses it
+     to override the zoomed inline size without any JS write at print time
+     (writing inline styles under beforeprint repaints the live screen). */
   function applyItemFontPx(item, node) {
     const z = state.infiniteCanvas ? state.zoomScale : 1;
     node.style.fontSize = item.fontSize * PT_TO_PX * z + 'px';
+    node.style.setProperty('--ps-fs', item.fontSize * PT_TO_PX + 'px');
   }
 
   /* ---------- Zoom ---------- */
@@ -676,7 +680,8 @@
       emitError('E_NO_LAYOUT', 'Layout "' + layoutId + '" not found.');
       return Promise.resolve(false);
     }
-    const designerAlreadyMounted = !!document.querySelector('#psDesignerChrome');
+    const designerAlreadyMounted =
+      !!document.querySelector('#psDesignerChrome');
     pendingDesignerLayoutId = layoutId;
     const result = applyValidatedLayoutToState(data, null, layoutId);
     if (!result.ok) {
@@ -913,6 +918,7 @@
     /** @returns {boolean} true once designer.js has finished loading */
     isDesignerLoaded: () => designerLoaded,
     isPrintInFlight: () => printInFlight,
+    triggerPrint,
     GEO_CLAMP,
     GEO_STYLE,
     VERT_TO_FLEX,

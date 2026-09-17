@@ -35,7 +35,7 @@ core.js
 -> MM_TO_PX=96/25.4 + PT_TO_PX=96/72 constants; pagePxSize() -> natural (zoom=1) page size in CSS px
 -> applyPageSize() sets @page mm rule, --ps-page-w/h custom props (print reset), and routes #page sizing (mm in embed, px in infinite)
 -> applyPageGeometry() (infinite mode) sets #page width/height/left/top in px from pagePxSize * zoomScale + panX/panY; re-applies item font px; emits 'fit'
--> applyItemFontPx(item, node) sets node font-size in px = item.fontSize * PT_TO_PX * zoomScale(infinite only)
+-> applyItemFontPx(item, node) sets node font-size in px = item.fontSize * PT_TO_PX * zoomScale(infinite only); also sets --ps-fs = unzoomed px (print uses it)
 -> render() calls applyItemFontPx per item
 -> fitPageToStage() infinite: centerPage + applyPageGeometry; embed: #page transform scale + #pageViewport px size (unchanged from before)
 -> centerPage() centers the scaled page inside #stage (infinite mode only)
@@ -110,9 +110,9 @@ PaperStamp.importLayoutDef(def, opts) -> sanitize + applyLayoutToState; does not
 PaperStamp.listLayouts() -> string[]
 PaperStamp.loadDesigner() -> Promise; fetches designer.html + designer.css + designer.js
 PaperStamp.openDesigner({layoutId}?) -> Promise; delegates to setDesignerLayout(layoutId) when given
-PaperStamp.setDesignerLayout(layoutId) -> Promise<bool>; loads designer, applies layout to canvas + designer select/name (designer:setLayout); no-op preview version is previewById()¦
-
+PaperStamp.setDesignerLayout(layoutId) -> Promise<bool>; loads designer, applies layout to canvas + designer select/name (designer:setLayout); no-op preview version is previewById()
 PaperStamp.on/emit -> event bus
+PaperStamp.triggerPrint() -> 2x rAF -> window.print() under printInFlight guard; used by designer print button
 PaperStamp.itemHooks -> designer attaches handlers here
 PaperStamp.deepClone(obj) -> JSON round-trip clone
 PaperStamp.version -> '1'
@@ -142,7 +142,7 @@ snap-to-center: within 1% of page center
 keys: Esc deselect/close, Ctrl+D dup, arrows nudge (0.2%), Del removes
 infinite canvas (designer-only): #stage overflow:hidden; #pageViewport is a static anchor; #page is positioned via left/top and sized via px width/height at the current zoom (no transform-scale → text renders at true pixel size and stays crisp)
 zoom semantic: 100% = page at natural CSS px size (mm * 96/25.4); font = pt * 96/72 * zoom px; zoom range 0.1–5.0
-print: @media print resets #page to physical mm via --ps-page-w/--ps-page-h custom props (set in applyPageSize)
+print: @media print resets #page to physical mm (--ps-page-w/h) + item font-size to --ps-fs (unzoomed) so zoom never leaks into print; hides #psDesignerChrome/#rightStack/#fillPanel + all fixed chrome
 pan inputs (designer): left-drag empty bg | middle-mouse drag | Space+left-drag | wheel = vertical pan | Shift+wheel = horizontal pan
 zoom inputs (designer): Ctrl/Cmd+wheel = pointer-anchored zoom via api.zoomAt; zoom buttons + Fit recenter page in infinite mode
 Fit button in infinite mode: computeFitScale -> centerPage -> applyCanvasTransform (keeps page clear of floating chrome via 120px x-pad / 48px top / 132px bottom insets)

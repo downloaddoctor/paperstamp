@@ -221,6 +221,11 @@ body.designer-mode #page {
     width: var(--ps-page-w, auto) !important;
     height: var(--ps-page-h, auto) !important;
   }
+  /* Fixed chrome layers: one rule hides all designer chrome (children of
+     the root overlay) plus the two fixed nodes that live outside it. */
+  #psDesignerChrome,
+  #rightStack,
+  #fillPanel,
   #layoutBar,
   #zoomBar,
   #pageSetupBar,
@@ -257,7 +262,10 @@ body.designer-mode #page {
     display: none !important;
   }
 
+  /* Print at physical size: --ps-fs is the unzoomed px size set by
+     applyItemFontPx; the inline font-size carries the on-screen zoom. */
   .item {
+    font-size: var(--ps-fs, 12pt) !important;
     cursor: default;
   }
   .resize-handle {
