@@ -20,7 +20,7 @@
   // sessionStorage): only one auto-reload per short window, so a flaky
   // sentinel/network hiccup can't reload the page repeatedly.
   var RELOAD_GUARD_KEY = 'paperstamp-reload-guard';
-  var RELOAD_GUARD_MS = 10000;
+  var RELOAD_GUARD_MS = 30000;
 
   navigator.serviceWorker.addEventListener('message', function (event) {
     if (!event.data || event.data.type !== 'paperstamp-update-ready') return;

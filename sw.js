@@ -17,6 +17,8 @@ const META_CACHE = 'paperstamp-meta';
 const SENTINEL_URL = './AGENTS.md';
 const SENTINEL_KEY = 'https://paperstamp.local/__sentinel__';
 const ASSET_VAL_PREFIX = 'https://paperstamp.local/__val__/';
+const LAST_CHECK_KEY = 'https://paperstamp.local/__lastcheck__';
+const CHECK_GUARD_MS = 30000;
 
 /* Local app-shell assets (relative to the SW scope, which is the repo root). */
 const SHELL_ASSETS = [
@@ -83,6 +85,14 @@ function readStoredValidator() {
 
 function writeStoredValidator(value) {
   return writeStored(SENTINEL_KEY, value);
+}
+
+function readLastCheck() {
+  return readStored(LAST_CHECK_KEY);
+}
+
+function writeLastCheck(value) {
+  return writeStored(LAST_CHECK_KEY, value);
 }
 
 function assetValKey(url) {
@@ -192,10 +202,16 @@ async function handleNavigation(request) {
 }
 
 /* Background update check, run via event.waitUntil so it never delays the
-   navigation response. HEADs the AGENTS.md sentinel; if changed, HEAD-diffs
-   shell assets, refetches the changed ones, then tells the requesting
-   client to reload so it picks up the fresh version. */
+   navigation response. Skips entirely if the last check was under
+   CHECK_GUARD_MS ago (no AGENTS.md fetch on rapid repeat opens). Otherwise
+   HEADs the AGENTS.md sentinel; if changed, HEAD-diffs shell assets,
+   refetches the changed ones, then tells the requesting client to reload
+   so it picks up the fresh version. */
 async function checkForUpdates(clientId) {
+  const lastCheck = Number(await readLastCheck()) || 0;
+  if (Date.now() - lastCheck < CHECK_GUARD_MS) return;
+  await writeLastCheck(String(Date.now()));
+
   let remote;
   try {
     remote = await fetchSentinelValidator();
