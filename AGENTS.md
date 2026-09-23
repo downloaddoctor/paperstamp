@@ -47,8 +47,8 @@ core.js
 -> zoomAt(clientX, clientY, scale) pointer-anchored zoom; keeps page point under cursor fixed; sets zoomMode='manual'
 -> clientToPage(clientX, clientY) -> {x,y} in unscaled page-local px (inverse of the canvas transform)
 -> sanitizeLayoutDef()/sanitizeItem() validate+coerce host layoutDef; {ok:false, errors[]} on fail
--> applyLayoutToState() applies def + fieldValues; also applies+paints guideSrc/guideOpacity if def carries them (host preview, previewById)
--> applyValidatedLayoutToState() = sanitize + re-attach guide fields (sanitizeLayoutDef strips them) + apply
+-> applyLayoutToState(def, fv, labelName, opts) applies def + fieldValues; opts.keepZoom preserves current zoomMode/zoomScale instead of resetting to fit/1; also applies+paints guideSrc/guideOpacity if def carries them (host preview, previewById)
+-> applyValidatedLayoutToState(def, fv, labelName, opts) = sanitize + re-attach guide fields (sanitizeLayoutDef strips them) + apply; forwards opts (keepZoom) to applyLayoutToState
 -> printLayout(layoutId) / printStateless(def) -> validate + triggerPrint (2x rAF -> window.print); emitError on fail
 -> registerLayoutDef() upserts into paperstampLayouts
 -> listLayouts/getAllLayouts/setAllLayouts -> localStorage
@@ -161,6 +161,7 @@ designer:close event -> teardown removes injected nodes; window.PaperStampDesign
 host -> plugin: paperstamp:print | paperstamp:printById | paperstamp:preview | paperstamp:previewById | paperstamp:register | paperstamp:ping | paperstamp:openDesigner | paperstamp:setDesignerLayout | paperstamp:closeDesigner | paperstamp:export | paperstamp:listLayoutDefs | paperstamp:import
 
 paperstamp:preview -> applyValidatedLayoutToState without triggerPrint (live preview)
+paperstamp:preview/previewById accept m.keepZoom: true -> skips zoomMode='fit'/zoomScale=1 reset in applyLayoutToState (opts.keepZoom); SDK preview({keepZoom}) / previewById(id, fv, {keepZoom}) forward it; example.html #keep-zoom checkbox drives it
 paperstamp:openDesigner -> openDesigner(m); paperstamp:setDesignerLayout -> setDesignerLayout(m.layoutId); paperstamp:closeDesigner -> emit('designer:close')
 plugin -> host: paperstamp:ready {version, layouts[], layoutDefs{}} | paperstamp:done | paperstamp:error {code, message} | paperstamp:layoutDefs {layouts{}}
 

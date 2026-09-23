@@ -167,6 +167,16 @@
         outline-offset: -1px;
         border-color: #3454d1;
       }
+      label.check {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+        margin-top: 4px;
+        font-size: 11px;
+        color: #5b6072;
+        cursor: pointer;
+      }
       label {
         display: flex;
         flex-direction: column;
@@ -377,6 +387,10 @@
             Print current
           </button>
         </div>
+        <label class="check"
+          ><input type="checkbox" id="keep-zoom" checked /> Keep current zoom on
+          preview</label
+        >
       </div>
 
       <div class="card">
@@ -423,8 +437,7 @@
           to ping
         </summary>
         <pre>
-{ type:'paperstamp:ready', version:'1', layouts:['id1','id2'], layoutDefs:{ id1:{...}, id2:{...} } }</pre
-        >
+{ type:'paperstamp:ready', version:'1', layouts:['id1','id2'], layoutDefs:{ id1:{...}, id2:{...} } }</pre>
         <p>
           Host receives this once on boot, again after register, and again after
           ping. Tolerate repeats.
@@ -436,8 +449,7 @@
           paperstamp:preview &mdash; render a layoutDef without printing
         </summary>
         <pre>
-{ type:'paperstamp:preview', layoutDef:{...}, fieldValues:{ name:'Jane' } }</pre
-        >
+{ type:'paperstamp:preview', layoutDef:{...}, fieldValues:{ name:'Jane' } }</pre>
         <p>
           Requires layoutDef.items to be an array. Renders silently. No print
           dialog.
@@ -450,8 +462,7 @@
           printing
         </summary>
         <pre>
-{ type:'paperstamp:previewById', layoutId:'shipping-label', fieldValues:{ name:'Jane' } }</pre
-        >
+{ type:'paperstamp:previewById', layoutId:'shipping-label', fieldValues:{ name:'Jane' } }</pre>
         <p>
           New in this version. Loads the layout from plugin localStorage,
           renders it, does not print.
@@ -463,8 +474,7 @@
           paperstamp:print &mdash; print an arbitrary layoutDef (stateless)
         </summary>
         <pre>
-{ type:'paperstamp:print', layoutDef:{...}, fieldValues:{...}, options:{ persist:false } }</pre
-        >
+{ type:'paperstamp:print', layoutDef:{...}, fieldValues:{...}, options:{ persist:false } }</pre>
         <p>
           Opens the browser print dialog. Nothing persisted unless
           layoutDef.name is set AND options.persist is true.
@@ -476,8 +486,7 @@
           paperstamp:printById &mdash; print a SAVED layout by id
         </summary>
         <pre>
-{ type:'paperstamp:printById', layoutId:'shipping-label', fieldValues:{...}, options:{} }</pre
-        >
+{ type:'paperstamp:printById', layoutId:'shipping-label', fieldValues:{...}, options:{} }</pre>
         <p>Opens the print dialog. Emits paperstamp:done on afterprint.</p>
       </details>
 
@@ -487,8 +496,7 @@
           (no print)
         </summary>
         <pre>
-{ type:'paperstamp:register', layoutDef:{ name:'my-layout', ... } }</pre
-        >
+{ type:'paperstamp:register', layoutDef:{ name:'my-layout', ... } }</pre>
         <p>layoutDef.name is required. Re-emits paperstamp:ready afterwards.</p>
       </details>
 
@@ -500,8 +508,7 @@
         <pre>{ type:'paperstamp:listLayoutDefs' }</pre>
         <p>Plugin replies with <code>paperstamp:layoutDefs</code>:</p>
         <pre>
-{ type:'paperstamp:layoutDefs', layouts:{ id1:{...}, id2:{...} } }</pre
-        >
+{ type:'paperstamp:layoutDefs', layouts:{ id1:{...}, id2:{...} } }</pre>
       </details>
 
       <details>
@@ -705,7 +712,8 @@
           inp.addEventListener('input', () => {
             lp.preview({
               layoutDef: currentLayoutDef,
-              fieldValues: readFieldValues()
+              fieldValues: readFieldValues(),
+              keepZoom: document.getElementById('keep-zoom').checked
             });
           });
           lab.appendChild(inp);
@@ -757,7 +765,9 @@
           return;
         }
         log('info', '→ paperstamp:previewById  id=' + id);
-        lp.previewById(id, readFieldValues());
+        lp.previewById(id, readFieldValues(), {
+          keepZoom: document.getElementById('keep-zoom').checked
+        });
       };
 
       document.getElementById('b-printbyid').onclick = () => {

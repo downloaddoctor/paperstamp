@@ -131,7 +131,7 @@
         enqueue({ type: 'paperstamp:listLayoutDefs' });
         return api;
       },
-      previewById(layoutId, fieldValues) {
+      previewById(layoutId, fieldValues, options) {
         if (!layoutId) {
           emit('error', {
             code: 'E_BAD_CALL',
@@ -142,7 +142,8 @@
         enqueue({
           type: 'paperstamp:previewById',
           layoutId,
-          fieldValues: fieldValues || null
+          fieldValues: fieldValues || null,
+          keepZoom: !!(options && options.keepZoom)
         });
         return api;
       },
@@ -194,7 +195,8 @@
         enqueue({
           type: 'paperstamp:preview',
           layoutDef: job.layoutDef,
-          fieldValues: job.fieldValues || null
+          fieldValues: job.fieldValues || null,
+          keepZoom: !!job.keepZoom
         });
         return api;
       },
@@ -334,10 +336,7 @@
     iframe.src = src;
     (opts.container || document.body).appendChild(iframe);
 
-    return createInstance(
-      iframe,
-      Object.assign({}, opts, { origin, src })
-    );
+    return createInstance(iframe, Object.assign({}, opts, { origin, src }));
   }
 
   return { embed, version: '1' };
