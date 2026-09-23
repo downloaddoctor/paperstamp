@@ -509,7 +509,7 @@
     el.guideImg.style.opacity = state.guideOpacity / 100;
   }
 
-  function applyLayoutToState(def, fv, labelName) {
+  function applyLayoutToState(def, fv, labelName, opts) {
     state.pageWmm = def.pageWmm;
     state.pageHmm = def.pageHmm;
     state.orientation = def.orientation || 'portrait';
@@ -519,6 +519,12 @@
     );
     state.nextId = Math.max(1, computeNextId(state.items));
     state.selectedId = null;
+    /* Live preview (designer embed) can opt out of resetting zoom/pan so
+       re-previewing a layout doesn't yank the user's current view. */
+    if (!opts || !opts.keepZoom) {
+      state.zoomMode = 'fit';
+      state.zoomScale = 1;
+    }
     /* Always reset the guide from the incoming def — a layout without a
        guide must clear any previously-uploaded image, not inherit it. */
     state.guideSrc = def.guideSrc || '';
@@ -527,18 +533,20 @@
     applyGuideToDom();
     applyPageSize();
     render();
-    fitPageToStage();
+    /* keepZoom preserves both zoom scale AND pan; skip the refit/center
+       pass entirely so the designer view doesn't snap back to center. */
+    if (!opts || !opts.keepZoom) fitPageToStage();
     emit('layout', { def, fv, labelName });
   }
 
-  function applyValidatedLayoutToState(def, fv, labelName) {
+  function applyValidatedLayoutToState(def, fv, labelName, opts) {
     const result = sanitizeLayoutDef(def);
     if (!result.ok) return result;
     if (Object.prototype.hasOwnProperty.call(def, 'guideSrc')) {
       result.def.guideSrc = def.guideSrc;
       result.def.guideOpacity = def.guideOpacity;
     }
-    applyLayoutToState(result.def, fv, labelName);
+    applyLayoutToState(result.def, fv, labelName, opts);
     return result;
   }
 
@@ -728,7 +736,8 @@
       const r = applyValidatedLayoutToState(
         m.layoutDef,
         m.fieldValues || null,
-        m.layoutDef.name || null
+        m.layoutDef.name || null,
+        { keepZoom: !!m.keepZoom }
       );
       if (!r.ok) {
         emitError('E_BAD_LAYOUT_DEF', r.errors.join('; '));
@@ -805,7 +814,8 @@
       const result = applyValidatedLayoutToState(
         data,
         m.fieldValues || null,
-        m.layoutId
+        m.layoutId,
+        { keepZoom: !!m.keepZoom }
       );
       if (!result.ok) {
         emitError('E_BAD_LAYOUT_DEF', result.errors.join('; '));
