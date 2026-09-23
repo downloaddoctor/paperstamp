@@ -163,7 +163,8 @@
           type: 'paperstamp:print',
           layoutDef: job.layoutDef,
           fieldValues: job.fieldValues || null,
-          options: job.options || {}
+          options: job.options || {},
+          keepZoom: !!(job.options && job.options.keepZoom)
         });
         return api;
       },
@@ -180,7 +181,8 @@
           type: 'paperstamp:printById',
           layoutId,
           fieldValues: fieldValues || null,
-          options: options || {}
+          options: options || {},
+          keepZoom: !!(options && options.keepZoom)
         });
         return api;
       },
@@ -222,19 +224,30 @@
        * Pass {layoutId} to open the designer with that saved layout
        * selected (select + name + canvas), not just previewed.
        */
+      /**
+       * Pass {layoutId?, minimal?} — minimal:true opens the designer
+       * straight into pan-only minimal mode (view + zoom/pan, no editing
+       * chrome), same as pressing the in-designer minimal toggle.
+       */
       openDesigner(opts) {
         const layoutId = opts && opts.layoutId;
+        const minimal = !!(opts && opts.minimal);
         if (layoutId)
-          enqueue({ type: 'paperstamp:setDesignerLayout', layoutId });
-        else enqueue({ type: 'paperstamp:openDesigner' });
+          enqueue({
+            type: 'paperstamp:setDesignerLayout',
+            layoutId,
+            minimal
+          });
+        else enqueue({ type: 'paperstamp:openDesigner', minimal });
         return api;
       },
       /**
        * Load the designer (if needed) and select a saved layout in it.
        * Unlike previewById(), this sets the designer's layout name/select
        * so Save/Delete operate on that layout, not an anonymous sheet.
+       * Pass {minimal:true} to also open straight into minimal mode.
        */
-      setDesignerLayout(layoutId) {
+      setDesignerLayout(layoutId, opts) {
         if (!layoutId) {
           emit('error', {
             code: 'E_BAD_CALL',
@@ -242,7 +255,11 @@
           });
           return api;
         }
-        enqueue({ type: 'paperstamp:setDesignerLayout', layoutId });
+        enqueue({
+          type: 'paperstamp:setDesignerLayout',
+          layoutId,
+          minimal: !!(opts && opts.minimal)
+        });
         return api;
       },
       /**

@@ -364,6 +364,10 @@
             Close designer
           </button>
         </div>
+        <label class="check"
+          ><input type="checkbox" id="minimal-mode" /> Open in minimal (pan-only)
+          mode</label
+        >
       </div>
 
       <div class="card">
@@ -388,7 +392,7 @@
           </button>
         </div>
         <label class="check"
-          ><input type="checkbox" id="keep-zoom" checked /> Keep current zoom on
+          ><input type="checkbox" id="keep-zoom" /> Keep current zoom on
           preview</label
         >
       </div>
@@ -777,7 +781,9 @@
           return;
         }
         log('info', '→ paperstamp:printById  id=' + id);
-        lp.printById(id, readFieldValues());
+        lp.printById(id, readFieldValues(), {
+          keepZoom: document.getElementById('keep-zoom').checked
+        });
       };
 
       document.getElementById('b-loaddef').onclick = () => {
@@ -815,8 +821,9 @@
       };
 
       document.getElementById('b-opendesigner').onclick = () => {
-        log('info', '→ paperstamp:openDesigner');
-        lp.openDesigner();
+        const minimal = document.getElementById('minimal-mode').checked;
+        log('info', '→ paperstamp:openDesigner' + (minimal ? '  minimal=true' : ''));
+        lp.openDesigner({ minimal });
       };
 
       document.getElementById('b-opendesigner-layout').onclick = () => {
@@ -825,8 +832,14 @@
           log('warn', 'select a saved layout first');
           return;
         }
-        log('info', '→ paperstamp:setDesignerLayout ' + id);
-        lp.setDesignerLayout(id);
+        const minimal = document.getElementById('minimal-mode').checked;
+        log(
+          'info',
+          '→ paperstamp:setDesignerLayout ' +
+            id +
+            (minimal ? '  minimal=true' : '')
+        );
+        lp.setDesignerLayout(id, { minimal });
       };
 
       document.getElementById('b-closedesigner').onclick = () => {
@@ -838,7 +851,8 @@
         log('info', '→ paperstamp:preview  (current layout)');
         lp.preview({
           layoutDef: currentLayoutDef,
-          fieldValues: readFieldValues()
+          fieldValues: readFieldValues(),
+          keepZoom: document.getElementById('keep-zoom').checked
         });
       };
 
@@ -846,7 +860,8 @@
         log('info', '→ paperstamp:print  (current layout)');
         lp.print({
           layoutDef: currentLayoutDef,
-          fieldValues: readFieldValues()
+          fieldValues: readFieldValues(),
+          options: { keepZoom: document.getElementById('keep-zoom').checked }
         });
       };
 

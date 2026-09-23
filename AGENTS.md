@@ -36,7 +36,8 @@ core.js
 -> applyGuideToDom() paints state.guideSrc/guideOpacity onto #guideImg; used by applyLayoutToState + designer's syncGuideDom
 -> applyPageSize() sets #page mm size + injects @page rule; orientation swaps w/h
 -> MM_TO_PX=96/25.4 + PT_TO_PX=96/72 constants; pagePxSize() -> natural (zoom=1) page size in CSS px
--> applyPageSize() sets @page mm rule, --ps-page-w/h custom props (print reset), and routes #page sizing (mm in embed, px in infinite)
+-> applyPageSize(opts) sets @page mm rule, --ps-page-w/h custom props (print reset), routes #page sizing (mm in embed, px in infinite); opts.keepZoom skips the deferred rAF refit (fitPageToStage)
+-> centerPageX() re-centers panX only (leaves panY + zoomScale); keepZoom preview path calls it so the page stays x-centered without yanking vertical scroll (full fitPageToStage/centerPage skipped)
 -> applyPageGeometry() (infinite mode) sets #page width/height/left/top in px from pagePxSize * zoomScale + panX/panY; re-applies item font px; emits 'fit'
 -> applyItemFontPx(item, node) sets node font-size in px = item.fontSize * PT_TO_PX * zoomScale(infinite only); also sets --ps-fs = unzoomed px (print uses it)
 -> render() calls applyItemFontPx per item
@@ -49,7 +50,7 @@ core.js
 -> sanitizeLayoutDef()/sanitizeItem() validate+coerce host layoutDef; {ok:false, errors[]} on fail
 -> applyLayoutToState(def, fv, labelName, opts) applies def + fieldValues; opts.keepZoom preserves current zoomMode/zoomScale instead of resetting to fit/1; also applies+paints guideSrc/guideOpacity if def carries them (host preview, previewById)
 -> applyValidatedLayoutToState(def, fv, labelName, opts) = sanitize + re-attach guide fields (sanitizeLayoutDef strips them) + apply; forwards opts (keepZoom) to applyLayoutToState
--> printLayout(layoutId) / printStateless(def) -> validate + triggerPrint (2x rAF -> window.print); emitError on fail
+-> printLayout(layoutId, fv, opts) / printStateless(def, fv, opts) -> validate + triggerPrint (2x rAF -> window.print); opts.keepZoom forwards to applyLayoutToState (preserve view); emitError on fail
 -> registerLayoutDef() upserts into paperstampLayouts
 -> listLayouts/getAllLayouts/setAllLayouts -> localStorage
 -> loadDesigner() fetches designer.css + designer.js on first call only; adds body.designer-mode; isDesignerLoaded() reflects completion
@@ -69,6 +70,7 @@ designer.js
 -> wireEvents() binds zoom, page setup, guide, geometry inputs, layout save/load, fill mode, keyboard shortcuts, both align groups
 
 -> setMode('design'|'fill') -> Design = geometry edit; Fill = #fillFormList
+-> setMinimalMode(on) -> body.designer-minimal hides all chrome except #zoomBar + #layoutName + #minimalToggleBtn; disables item hooks (pan-only view); M key toggles; cleared on designer:close
 -> notify()/#psToast, confirmAction()/#psConfirm
 -> clearLayout() resets state to a blank A4 portrait sheet (items, guide, name field); deleteLayout() calls it when the deleted layout is the one displayed
 -> on designer:close -> removes [data-paperstamp-designer] nodes, drops body.designer-mode
@@ -114,8 +116,8 @@ PaperStamp.exportLayoutDef(name?) -> current in-memory state as {name, pageWmm, 
 PaperStamp.importLayoutDef(def, opts) -> sanitize + applyLayoutToState; does not persist unless caller separately calls registerLayoutDef
 PaperStamp.listLayouts() -> string[]
 PaperStamp.loadDesigner() -> Promise; fetches designer.html + designer.css + designer.js
-PaperStamp.openDesigner({layoutId}?) -> Promise; delegates to setDesignerLayout(layoutId) when given
-PaperStamp.setDesignerLayout(layoutId) -> Promise<bool>; loads designer, applies layout to canvas + designer select/name (designer:setLayout); no-op preview version is previewById()
+PaperStamp.openDesigner({layoutId?, minimal?})?; delegates to setDesignerLayout(layoutId, {minimal}) when layoutId given; minimal:true opens straight into minimal mode (pending until designer chrome mounts, consumed in designer.js init())
+PaperStamp.setDesignerLayout(layoutId, {minimal?}?) -> Promise<bool>; loads designer, applies layout to canvas + designer select/name (designer:setLayout, carries minimal); no-op preview version is previewById()
 PaperStamp.on/emit -> event bus
 PaperStamp.triggerPrint() -> 2x rAF -> window.print() under printInFlight guard; used by designer print button
 PaperStamp.itemHooks -> designer attaches handlers here
@@ -154,6 +156,7 @@ Fit button in infinite mode: computeFitScale -> centerPage -> applyCanvasTransfo
 embed/sdk.html: no infinite canvas — #stage stays bounded-scroll with safe-center flex; setInfiniteCanvas(false) on designer:close restores it
 
 body.designer-mode -> chrome visible; set by designer.js init(), removed on designer:close
+body.designer-minimal -> minimal pan-only view; #minimalToggleBtn in #zoomBar toggles it (also M key); pan inputs stay live, item edit chrome hidden
 afterprint -> emitDone(); no window.close() — host owns iframe lifecycle
 designer:close event -> teardown removes injected nodes; window.PaperStampDesigner.init exposed so loadDesigner() can rebuild them on reopen
 
@@ -161,8 +164,9 @@ designer:close event -> teardown removes injected nodes; window.PaperStampDesign
 host -> plugin: paperstamp:print | paperstamp:printById | paperstamp:preview | paperstamp:previewById | paperstamp:register | paperstamp:ping | paperstamp:openDesigner | paperstamp:setDesignerLayout | paperstamp:closeDesigner | paperstamp:export | paperstamp:listLayoutDefs | paperstamp:import
 
 paperstamp:preview -> applyValidatedLayoutToState without triggerPrint (live preview)
-paperstamp:preview/previewById accept m.keepZoom: true -> skips zoomMode='fit'/zoomScale=1 reset in applyLayoutToState (opts.keepZoom); SDK preview({keepZoom}) / previewById(id, fv, {keepZoom}) forward it; example.html #keep-zoom checkbox drives it
-paperstamp:openDesigner -> openDesigner(m); paperstamp:setDesignerLayout -> setDesignerLayout(m.layoutId); paperstamp:closeDesigner -> emit('designer:close')
+paperstamp:preview/previewById/print/printById accept m.keepZoom: true -> applyLayoutToState keeps zoomScale + panY, re-centers panX via centerPageX (skips fit/center reset); print/printById read m.keepZoom (print also m.options.keepZoom); SDK preview({keepZoom}) / previewById(id, fv, {keepZoom}) / print({options:{keepZoom}}) / printById(id, fv, {keepZoom}) forward it; example.html #keep-zoom checkbox drives it
+paperstamp:openDesigner -> openDesigner(m); paperstamp:setDesignerLayout -> setDesignerLayout(m.layoutId, {minimal: m.minimal}); paperstamp:closeDesigner -> emit('designer:close')
+m.minimal on openDesigner/setDesignerLayout -> designer opens straight into minimal mode (core.pendingMinimal, consumed by designer.js init() or the designer:setLayout event if chrome already mounted); SDK openDesigner({minimal})/setDesignerLayout(id,{minimal}) forward it
 plugin -> host: paperstamp:ready {version, layouts[], layoutDefs{}} | paperstamp:done | paperstamp:error {code, message} | paperstamp:layoutDefs {layouts{}}
 
 error codes: E_BAD_MESSAGE, E_NO_LAYOUT, E_BAD_LAYOUT_DEF

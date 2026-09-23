@@ -245,6 +245,15 @@
             stroke-linejoin="round"
           />
         </symbol>
+        <symbol id="i-minimize" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M9 3v4a2 2 0 0 1-2 2H3M21 9h-4a2 2 0 0 1-2-2V3M3 15h4a2 2 0 0 1 2 2v4M15 21v-4a2 2 0 0 1 2-2h4"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
       </defs>
     </svg>
 
@@ -255,6 +264,14 @@
         <button id="zoomInBtn" title="Zoom in">+</button>
         <button id="zoom100Btn" title="Reset to 100%">100%</button>
         <button id="zoomFitBtn" title="Fit to screen">Fit</button>
+        <button
+          id="minimalToggleBtn"
+          class="minimal-toggle-btn"
+          title="Minimal mode (pan only)"
+          aria-pressed="false"
+        >
+          <svg class="icon"><use href="#i-minimize" /></svg>
+        </button>
       </div>
       <div id="pageSetupBar">
         <button

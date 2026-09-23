@@ -275,7 +275,7 @@
     return { w: w * MM_TO_PX, h: h * MM_TO_PX };
   }
 
-  function applyPageSize() {
+  function applyPageSize(opts) {
     const { w, h } = physicalMm();
     /* Custom props for the print reset in style.css. */
     document.documentElement.style.setProperty('--ps-page-w', w + 'mm');
@@ -290,6 +290,9 @@
       el.page.style.height = h + 'mm';
       el.page.style.transform = 'none';
     }
+    /* keepZoom: page size updated in place, but skip the deferred refit so
+       the view doesn't re-center under the user. */
+    if (opts && opts.keepZoom) return;
     if (fitRafPending) return;
     fitRafPending = true;
     requestAnimationFrame(() => {
@@ -352,6 +355,17 @@
     const s = state.zoomScale;
     state.panX = Math.round((sw - w * s) / 2);
     state.panY = Math.round((sh - h * s) / 2);
+  }
+
+  /* Re-center horizontally only, leaving vertical pan untouched. Used by
+     the keepZoom preview path so the page stays x-centered without yanking
+     the user's vertical scroll position. */
+  function centerPageX() {
+    if (!state.infiniteCanvas) return;
+    const { w } = pagePxSize();
+    const s = state.zoomScale;
+    state.panX = Math.round((el.stage.clientWidth - w * s) / 2);
+    applyPageGeometry();
   }
 
   function fitPageToStage() {
@@ -531,11 +545,12 @@
     state.guideOpacity =
       typeof def.guideOpacity === 'number' ? def.guideOpacity : 60;
     applyGuideToDom();
-    applyPageSize();
+    applyPageSize(opts);
     render();
-    /* keepZoom preserves both zoom scale AND pan; skip the refit/center
-       pass entirely so the designer view doesn't snap back to center. */
-    if (!opts || !opts.keepZoom) fitPageToStage();
+    /* keepZoom preserves zoom scale + vertical pan, but re-centers the page
+       horizontally so it never drifts off the x-axis. */
+    if (opts && opts.keepZoom) centerPageX();
+    else fitPageToStage();
     emit('layout', { def, fv, labelName });
   }
 
@@ -591,13 +606,13 @@
     );
     return true;
   }
-  function printLayout(layoutId, fv) {
+  function printLayout(layoutId, fv, opts) {
     const data = getAllLayouts()[layoutId];
     if (!data) {
       emitError('E_NO_LAYOUT', 'Layout "' + layoutId + '" not found.');
       return false;
     }
-    const result = applyValidatedLayoutToState(data, fv, layoutId);
+    const result = applyValidatedLayoutToState(data, fv, layoutId, opts);
     if (!result.ok) {
       emitError('E_BAD_LAYOUT_DEF', result.errors.join('; '));
       return false;
@@ -610,7 +625,9 @@
       emitError('E_BAD_LAYOUT_DEF', 'layoutDef.items must be an array.');
       return false;
     }
-    const result = applyValidatedLayoutToState(def, fv, def.name || null);
+    const result = applyValidatedLayoutToState(def, fv, def.name || null, {
+      keepZoom: !!(opts && opts.keepZoom)
+    });
     if (!result.ok) {
       emitError('E_BAD_LAYOUT_DEF', result.errors.join('; '));
       return false;
@@ -687,8 +704,9 @@
      open. This is the "open designer on THIS layout" entry point, unlike
      previewById() which only paints the canvas without touching designer UI. */
   let pendingDesignerLayoutId = null;
+  let pendingMinimal = false;
 
-  function setDesignerLayout(layoutId) {
+  function setDesignerLayout(layoutId, opts) {
     if (!layoutId) {
       emitError('E_BAD_MESSAGE', 'setDesignerLayout requires layoutId.');
       return Promise.resolve(false);
@@ -701,6 +719,8 @@
     const designerAlreadyMounted =
       !!document.querySelector('#psDesignerChrome');
     pendingDesignerLayoutId = layoutId;
+    const minimal = !!(opts && opts.minimal);
+    pendingMinimal = minimal;
     const result = applyValidatedLayoutToState(data, null, layoutId);
     if (!result.ok) {
       emitError('E_BAD_LAYOUT_DEF', result.errors.join('; '));
@@ -709,16 +729,18 @@
     revealPage();
     return loadDesigner().then(() => {
       // If the designer chrome was already up, nudge it to sync select/name
-      // to the new layout. A fresh load already consumed pendingLayoutId in
-      // its init(), so emitting here would double-apply.
-      if (designerAlreadyMounted) emit('designer:setLayout', { layoutId });
+      // to the new layout. A fresh load already consumed pendingLayoutId/
+      // pendingMinimal in its init(), so emitting here would double-apply.
+      if (designerAlreadyMounted)
+        emit('designer:setLayout', { layoutId, minimal });
       return true;
     });
   }
 
   function openDesigner(opts) {
     const layoutId = opts && opts.layoutId;
-    if (layoutId) return setDesignerLayout(layoutId);
+    if (layoutId) return setDesignerLayout(layoutId, opts);
+    pendingMinimal = !!(opts && opts.minimal);
     return loadDesigner();
   }
 
@@ -751,7 +773,10 @@
         return;
       }
       if (
-        !printStateless(m.layoutDef, m.fieldValues || null, m.options || {})
+        !printStateless(m.layoutDef, m.fieldValues || null, {
+          ...(m.options || {}),
+          keepZoom: !!m.keepZoom || !!(m.options && m.options.keepZoom)
+        })
       ) {
         emitError('E_BAD_LAYOUT_DEF', 'printStateless rejected the layoutDef.');
         return;
@@ -767,7 +792,9 @@
         emitError('E_NO_LAYOUT', 'Layout "' + m.layoutId + '" not found.');
         return;
       }
-      printLayout(m.layoutId, m.fieldValues || null);
+      printLayout(m.layoutId, m.fieldValues || null, {
+        keepZoom: !!m.keepZoom
+      });
       revealPage();
     },
     'paperstamp:register'(m) {
@@ -790,7 +817,7 @@
         emitError('E_BAD_MESSAGE', 'setDesignerLayout requires layoutId.');
         return;
       }
-      setDesignerLayout(m.layoutId);
+      setDesignerLayout(m.layoutId, { minimal: !!m.minimal });
     },
     'paperstamp:closeDesigner'() {
       emit('designer:close', {});
@@ -930,6 +957,12 @@
     openDesigner,
     setDesignerLayout,
     getPendingDesignerLayoutId: () => pendingDesignerLayoutId,
+    getPendingMinimal: () => pendingMinimal,
+    consumePendingMinimal: () => {
+      const v = pendingMinimal;
+      pendingMinimal = false;
+      return v;
+    },
     consumePendingDesignerLayoutId: () => {
       const v = pendingDesignerLayoutId;
       pendingDesignerLayoutId = null;
