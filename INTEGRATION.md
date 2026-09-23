@@ -117,12 +117,13 @@ lp.register(layoutDef); // layoutDef.name required
 lp.printById('shipping-label', { name: 'Jane' });
 
 // Open / close the editor UI inside the embedded iframe
-lp.openDesigner();
+lp.openDesigner(); // or lp.openDesigner({ minimal: true }) for pan-only view mode
 lp.closeDesigner();
 
 // Open the editor on a specific saved layout (select + name + canvas)
 lp.openDesigner({ layoutId: 'shipping-label' });
 lp.setDesignerLayout('shipping-label'); // same effect, explicit method
+lp.setDesignerLayout('shipping-label', { minimal: true }); // opens straight into minimal (pan-only) mode
 
 // Round-trip the current in-plugin layout
 lp.export((def) => console.log(def));

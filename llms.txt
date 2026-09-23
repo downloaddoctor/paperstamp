@@ -64,7 +64,7 @@ instance methods: `preview({layoutDef, fieldValues?})`,
 `print({layoutDef, fieldValues?, options?})`,
 `printById(layoutId, fieldValues?, options?)`,
 `register(layoutDef)`, `ping()`, `isReady()`, `layouts()`, `layoutDefs()`, `listLayoutDefs(cb?)`, `previewById(id, fv?)`,
-`on('ready'|'done'|'error', fn)`, `openDesigner({layoutId?})`, `setDesignerLayout(layoutId)`, `closeDesigner()`,
+`on('ready'|'done'|'error', fn)`, `openDesigner({layoutId?, minimal?})`, `setDesignerLayout(layoutId, {minimal?})`, `closeDesigner()`,
 `export(cb?)`, `import(layoutDef, options?)`, `destroy()`.
 
 ## Schemas

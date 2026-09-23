@@ -250,6 +250,7 @@
       'zoom100Btn',
       'zoomFitBtn',
       'zoomPctLabel',
+      'minimalToggleBtn',
       'railPage',
       'railGuide',
       'geomBar',
@@ -818,6 +819,40 @@
     }
   }
 
+  /* ---------- Minimal mode (pan-only) ---------- */
+
+  /* In minimal mode every editing affordance is hidden; only the zoom bar
+     and the layout-name field remain. Item interaction is disabled so the
+     canvas is view-only + pannable. */
+  function setMinimalMode(on) {
+    const minimal = !!on;
+    document.body.classList.toggle('designer-minimal', minimal);
+    if (el.minimalToggleBtn) {
+      el.minimalToggleBtn.classList.toggle('active', minimal);
+      el.minimalToggleBtn.setAttribute('aria-pressed', String(minimal));
+    }
+    /* Layout name stays visible but non-editable in minimal mode. */
+    if (el.layoutName) {
+      el.layoutName.readOnly = minimal;
+      el.layoutName.classList.toggle('readonly', minimal);
+    }
+    if (minimal) {
+      // Drop any open editing UI + selection so nothing floats over the page.
+      closeAllPopovers();
+      state.selectedId = null;
+      hideItemToolbar();
+      renderSelection();
+      itemHooks.interactive = false;
+      itemHooks.onPointerDown = null;
+      itemHooks.onResizePointerDown = null;
+      itemHooks.onDblClick = null;
+      render();
+    } else {
+      installItemHooks();
+      render();
+    }
+  }
+
   /* ---------- Alignment ---------- */
 
   function setActiveAlign(a) {
@@ -869,6 +904,9 @@
     on(el.zoomOutBtn, 'click', () => core.zoomBy(-ZOOM_STEP));
     on(el.zoom100Btn, 'click', () => core.setZoomScale(1));
     on(el.zoomFitBtn, 'click', () => core.setZoomMode('fit'));
+    on(el.minimalToggleBtn, 'click', () =>
+      setMinimalMode(!document.body.classList.contains('designer-minimal'))
+    );
 
     const chrome = el.chrome || document;
     chrome.querySelectorAll('.rail-btn[data-panel]').forEach((btn) => {
@@ -1061,6 +1099,11 @@
       };
       const typing = isTyping();
       if (typing) return;
+      if ((e.key === 'm' || e.key === 'M') && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        setMinimalMode(!document.body.classList.contains('designer-minimal'));
+        return;
+      }
       if (e.key === 'Escape') {
         closeAllPopovers();
         if (state.selectedId != null) {
@@ -1139,6 +1182,11 @@
         core.consumePendingDesignerLayoutId();
       applyDesignerLayout(pid);
     }
+    // Pick up a minimal-mode request made before the chrome existed.
+    const wantMinimal =
+      core.getPendingMinimal && core.getPendingMinimal();
+    core.consumePendingMinimal && core.consumePendingMinimal();
+    if (wantMinimal) setMinimalMode(true);
     core.emit('designer:ready', {});
     core.emit('designer:mounted', {});
   }
@@ -1150,6 +1198,7 @@
     core.consumePendingDesignerLayoutId &&
       core.consumePendingDesignerLayoutId();
     applyDesignerLayout(p.layoutId);
+    if (p.minimal) setMinimalMode(true);
   });
 
   core.onEvent('designer:close', () => {
@@ -1157,6 +1206,8 @@
       el._canvasInput.teardown();
       el._canvasInput = null;
     }
+    /* Drop minimal mode so the next open starts in full editing mode. */
+    document.body.classList.remove('designer-minimal');
     core.setInfiniteCanvas(false);
     document
       .querySelectorAll('[data-paperstamp-designer]')

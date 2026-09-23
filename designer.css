@@ -785,3 +785,62 @@
     bottom: 14px;
   }
 }
+
+/* ---------- Minimal mode (pan-only) ---------- */
+/* Hides every editing affordance; keeps only the zoom bar, the layout-name
+   field and the minimal toggle itself. Panning (left-drag on empty bg,
+   wheel, middle-mouse, Space+left-drag) stays available. */
+
+body.designer-minimal #toolRail,
+body.designer-minimal #itemToolbar,
+body.designer-minimal #geomBar,
+body.designer-minimal #pageSetupBar,
+body.designer-minimal #bottomRightBar,
+body.designer-minimal .tool-popover,
+body.designer-minimal #layoutComboBtn,
+body.designer-minimal #layoutComboList,
+body.designer-minimal #layoutBar .layout-btn,
+body.designer-minimal #layoutBar .layout-divider,
+body.designer-minimal #layoutSelect,
+body.designer-minimal .item-badge {
+  display: none !important;
+}
+
+/* Item resize handles / selection outline are inert in minimal mode. */
+body.designer-minimal .item {
+  cursor: default;
+}
+
+/* Layout name is visible but locked in minimal mode. */
+.layout-name-input.readonly {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.minimal-toggle-btn {
+  min-width: 32px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--ink-soft);
+  line-height: 1;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.minimal-toggle-btn:hover {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+
+.minimal-toggle-btn.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
