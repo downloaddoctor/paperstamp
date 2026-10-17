@@ -88,7 +88,9 @@ setDesignerLayout(id) -> applyValidatedLayoutToState -> loadDesigner -> emit des
 openDesigner({layoutId}) -> setDesignerLayout(layoutId) else loadDesigner()
 
 # SCHEMA
-item = {id, type:'text', x, y, w, h (% 0-100), text, name, fontSize (pt), align, valign}
+item = {id, type:'text', x, y, w, h (% 0-100), text, name, fontSize (pt), align, valign, dotted?, fixed?}
+dotted -> #dottedToggle -> .item.dotted adds dotted bottom border (screen + print) as a filler line
+fixed -> #fixedToggle -> pre-filled text: skipped by applyFieldValuesToItems and #fillFormList
 align -> #textAlignGroup (left|center|right) -> node.style.alignItems (cross axis of column flex)
 valign -> #vertAlignGroup (top|middle|bottom) -> node.style.justifyContent (main axis of column flex)
 both -> node.style.textAlign via item.align (text justification for wrapped lines)

@@ -111,6 +111,8 @@
       h,
       text: raw.text != null ? String(raw.text) : '',
       name: raw.name != null ? String(raw.name) : 'Field ' + id,
+      dotted: raw.dotted === true,
+      fixed: raw.fixed === true,
       fontSize,
       align,
       valign
@@ -461,7 +463,10 @@
     const frag = document.createDocumentFragment();
     for (const item of state.items) {
       const node = document.createElement('div');
-      node.className = 'item text-item';
+      node.className =
+        'item text-item' +
+        (item.dotted ? ' dotted' : '') +
+        (item.fixed ? ' fixed' : '');
       node.dataset.id = item.id;
       node.style.left = item.x + '%';
       node.style.top = item.y + '%';
@@ -504,7 +509,12 @@
   function applyFieldValuesToItems(items, fv) {
     if (!fv) return items;
     return items.map((it) => {
-      if (it.type === 'text' && it.name && fv[it.name] !== undefined) {
+      if (
+        it.type === 'text' &&
+        it.name &&
+        !it.fixed &&
+        fv[it.name] !== undefined
+      ) {
         return Object.assign(deepClone(it), { text: String(fv[it.name]) });
       }
       return deepClone(it);

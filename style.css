@@ -178,6 +178,10 @@ body.designer-mode #page {
   outline: none;
 }
 
+.item.dotted {
+  border-bottom: 1.5px dotted currentColor;
+}
+
 .item.text-item {
   white-space: pre-wrap;
 }
