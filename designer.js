@@ -280,6 +280,8 @@
       'textAlignGroup',
       'vertAlignGroup',
       'deleteItem',
+      'dottedToggle',
+      'fixedToggle',
       'fillPanel',
       'fillFormList'
     ].forEach((id) => {
@@ -487,6 +489,9 @@
     syncGeoInputs(item);
     setActiveAlign(item.align);
     setActiveVAlign(item.valign || 'top');
+    if (el.dottedToggle)
+      el.dottedToggle.classList.toggle('active', !!item.dotted);
+    if (el.fixedToggle) el.fixedToggle.classList.toggle('active', !!item.fixed);
     el.geomBar.classList.add('open');
     positionGeomBar(getItemNode(id));
     showItemToolbar(id);
@@ -604,6 +609,8 @@
       w: 30,
       h: 6,
       text: 'Text',
+      dotted: false,
+      fixed: false,
       fontSize: 12,
       align: 'left',
       valign: 'top'
@@ -763,7 +770,9 @@
 
   function renderFillForm() {
     el.fillFormList.innerHTML = '';
-    const textItems = state.items.filter((it) => it.type === 'text');
+    const textItems = state.items.filter(
+      (it) => it.type === 'text' && !it.fixed
+    );
     if (!textItems.length) {
       const p = document.createElement('p');
       p.className = 'hint';
@@ -991,6 +1000,21 @@
       item.name = el.itemName.value;
       if (state.mode === 'fill') renderFillForm();
     });
+    on(el.dottedToggle, 'click', () => {
+      const item = findItem(state.selectedId);
+      if (!item) return;
+      item.dotted = !item.dotted;
+      render();
+      selectItem(item.id);
+    });
+    on(el.fixedToggle, 'click', () => {
+      const item = findItem(state.selectedId);
+      if (!item) return;
+      item.fixed = !item.fixed;
+      if (state.mode === 'fill') renderFillForm();
+      render();
+      selectItem(item.id);
+    });
     on(el.railAddText, 'click', addTextItem);
     on(el.deleteItem, 'click', deleteSelected);
     wireGeometryInput(el.itemX, 'x');
@@ -1183,8 +1207,7 @@
       applyDesignerLayout(pid);
     }
     // Pick up a minimal-mode request made before the chrome existed.
-    const wantMinimal =
-      core.getPendingMinimal && core.getPendingMinimal();
+    const wantMinimal = core.getPendingMinimal && core.getPendingMinimal();
     core.consumePendingMinimal && core.consumePendingMinimal();
     if (wantMinimal) setMinimalMode(true);
     core.emit('designer:ready', {});
