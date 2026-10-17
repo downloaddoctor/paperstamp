@@ -88,8 +88,9 @@ setDesignerLayout(id) -> applyValidatedLayoutToState -> loadDesigner -> emit des
 openDesigner({layoutId}) -> setDesignerLayout(layoutId) else loadDesigner()
 
 # SCHEMA
-item = {id, type:'text', x, y, w, h (% 0-100), text, name, fontSize (pt), align, valign, dotted?, fixed?}
-dotted -> #dottedToggle -> .item.dotted adds dotted bottom border (screen + print) as a filler line
+item = {id, type:'text', x, y, w, h (% 0-100), text, name, fontSize (pt), align, valign, line?, fixed?}
+line item = {id, type:'line', x, y, w, h (% 0-100), name, line (dotted|dashed|solid), thickness (pt), color (#rrggbb)} -> separate movable/resizable item; #railAddLine adds it; #lineStyle + #lineThickness (.line-only) show in item toolbar only when a line is selected, text controls + all .toolbar-sep hide (no stray dividers); #lineColor sets item.color -> --lc; .item.line-item::after draws the stroke as a gradient bar, height --lt-px = whole px scaled by zoom (applyItemFontPx), print uses --ps-lt unzoomed; skipped by fill mode and fieldValues (type text only)
+bg? (#rrggbb) -> #itemBg sets item.bg (text + line items), #itemBgClear removes; render() paints node.style.background + .has-bg; sanitizeItem validates; printed with print-color-adjust:exact
 fixed -> #fixedToggle -> pre-filled text: skipped by applyFieldValuesToItems and #fillFormList
 align -> #textAlignGroup (left|center|right) -> node.style.alignItems (cross axis of column flex)
 valign -> #vertAlignGroup (top|middle|bottom) -> node.style.justifyContent (main axis of column flex)
