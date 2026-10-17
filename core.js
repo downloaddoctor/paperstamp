@@ -102,6 +102,27 @@
       : 'top';
     const fontSize = num('fontSize', 12, 4, 400);
     const id = Number.isFinite(Number(raw.id)) ? Number(raw.id) : i + 1;
+    if (raw.type === 'line') {
+      return {
+        id,
+        type: 'line',
+        x: Math.min(x, 100 - w),
+        y: Math.min(y, 100 - h),
+        w,
+        h,
+        text: '',
+        name: raw.name != null ? String(raw.name) : 'Line ' + id,
+        line: ['dotted', 'dashed', 'solid'].includes(raw.line)
+          ? raw.line
+          : 'dotted',
+        thickness: num('thickness', 1, 0.25, 20),
+        color: /^#[0-9a-fA-F]{6}$/.test(raw.color) ? raw.color : '#111111',
+        bg: /^#[0-9a-fA-F]{6}$/.test(raw.bg) ? raw.bg : '',
+        fontSize: 12,
+        align: 'left',
+        valign: 'top'
+      };
+    }
     return {
       id,
       type: 'text',
@@ -111,8 +132,8 @@
       h,
       text: raw.text != null ? String(raw.text) : '',
       name: raw.name != null ? String(raw.name) : 'Field ' + id,
-      dotted: raw.dotted === true,
       fixed: raw.fixed === true,
+      bg: /^#[0-9a-fA-F]{6}$/.test(raw.bg) ? raw.bg : '',
       fontSize,
       align,
       valign
@@ -329,6 +350,14 @@
     const z = state.infiniteCanvas ? state.zoomScale : 1;
     node.style.fontSize = item.fontSize * PT_TO_PX * z + 'px';
     node.style.setProperty('--ps-fs', item.fontSize * PT_TO_PX + 'px');
+    if (item.type === 'line') {
+      const base = (item.thickness || 1) * PT_TO_PX;
+      node.style.setProperty(
+        '--lt-px',
+        Math.max(1, Math.round(base * z)) + 'px'
+      );
+      node.style.setProperty('--ps-lt', base + 'px');
+    }
   }
 
   /* ---------- Zoom ---------- */
@@ -464,10 +493,14 @@
     for (const item of state.items) {
       const node = document.createElement('div');
       node.className =
-        'item text-item' +
-        (item.dotted ? ' dotted' : '') +
-        (item.fixed ? ' fixed' : '');
+        item.type === 'line'
+          ? 'item line-item line-' + item.line
+          : 'item text-item' + (item.fixed ? ' fixed' : '');
       node.dataset.id = item.id;
+      node.style.background = item.bg || '';
+      if (item.bg) node.classList.add('has-bg');
+      if (item.type === 'line')
+        node.style.setProperty('--lc', item.color || '#111111');
       node.style.left = item.x + '%';
       node.style.top = item.y + '%';
       node.style.width = item.w + '%';
@@ -1018,7 +1051,7 @@
         /* malformed data param — proceed with null fieldValues */
 
         fv = JSON.parse(decodeURIComponent(raw));
-      } catch (e) {}
+      } catch (e) { }
     }
     printLayout(layoutId, fv);
     revealPage();

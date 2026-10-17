@@ -64,7 +64,7 @@
       if (stage.setPointerCapture)
         try {
           stage.setPointerCapture(e.pointerId);
-        } catch (_) {}
+        } catch (_) { }
     }
 
     function onPointerDown(e) {
@@ -280,7 +280,12 @@
       'textAlignGroup',
       'vertAlignGroup',
       'deleteItem',
-      'dottedToggle',
+      'lineStyle',
+      'lineThickness',
+      'lineColor',
+      'railAddLine',
+      'itemBg',
+      'itemBgClear',
       'fixedToggle',
       'fillPanel',
       'fillFormList'
@@ -489,9 +494,24 @@
     syncGeoInputs(item);
     setActiveAlign(item.align);
     setActiveVAlign(item.valign || 'top');
-    if (el.dottedToggle)
-      el.dottedToggle.classList.toggle('active', !!item.dotted);
+    const isLine = item.type === 'line';
+    el.itemToolbar
+      .querySelectorAll(
+        '#itemName,#fontSize,#textAlignGroup,#vertAlignGroup,#fixedToggle,.toolbar-sep'
+      )
+      .forEach((n) => {
+        n.style.display = isLine ? 'none' : '';
+      });
+    el.itemToolbar.querySelectorAll('.line-only').forEach((n) => {
+      n.style.display = isLine ? '' : 'none';
+    });
+    if (isLine) {
+      el.lineStyle.value = item.line || 'dotted';
+      el.lineThickness.value = item.thickness || 1;
+      el.lineColor.value = item.color || '#111111';
+    }
     if (el.fixedToggle) el.fixedToggle.classList.toggle('active', !!item.fixed);
+    el.itemBg.value = item.bg || '#ffff99';
     el.geomBar.classList.add('open');
     positionGeomBar(getItemNode(id));
     showItemToolbar(id);
@@ -609,8 +629,28 @@
       w: 30,
       h: 6,
       text: 'Text',
-      dotted: false,
       fixed: false,
+      fontSize: 12,
+      align: 'left',
+      valign: 'top'
+    });
+    render();
+    selectItem(id);
+  }
+  function addLineItem() {
+    const id = state.nextId++;
+    state.items.push({
+      id,
+      type: 'line',
+      x: 10,
+      y: 20,
+      w: 40,
+      h: 2,
+      name: 'Line ' + id,
+      text: '',
+      line: 'dotted',
+      thickness: 1,
+      color: '#111111',
       fontSize: 12,
       align: 'left',
       valign: 'top'
@@ -1000,10 +1040,42 @@
       item.name = el.itemName.value;
       if (state.mode === 'fill') renderFillForm();
     });
-    on(el.dottedToggle, 'click', () => {
+    on(el.lineStyle, 'change', () => {
+      const item = findItem(state.selectedId);
+      if (!item || item.type !== 'line') return;
+      item.line = el.lineStyle.value;
+      render();
+      selectItem(item.id);
+    });
+    on(el.lineThickness, 'input', () => {
+      const item = findItem(state.selectedId);
+      if (!item || item.type !== 'line') return;
+      item.thickness = Math.max(
+        0.25,
+        Math.min(20, Number(el.lineThickness.value) || 1)
+      );
+      render();
+      selectItem(item.id);
+    });
+    on(el.lineColor, 'input', () => {
+      const item = findItem(state.selectedId);
+      if (!item || item.type !== 'line') return;
+      item.color = el.lineColor.value;
+      render();
+      selectItem(item.id);
+    });
+    on(el.railAddLine, 'click', addLineItem);
+    on(el.itemBg, 'input', () => {
       const item = findItem(state.selectedId);
       if (!item) return;
-      item.dotted = !item.dotted;
+      item.bg = el.itemBg.value;
+      render();
+      selectItem(item.id);
+    });
+    on(el.itemBgClear, 'click', () => {
+      const item = findItem(state.selectedId);
+      if (!item) return;
+      item.bg = '';
       render();
       selectItem(item.id);
     });

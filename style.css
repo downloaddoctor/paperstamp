@@ -178,8 +178,54 @@ body.designer-mode #page {
   outline: none;
 }
 
-.item.dotted {
-  border-bottom: 1.5px dotted currentColor;
+body.designer-mode .item.line-item:not(.has-bg) {
+  background: rgba(52, 84, 209, 0.07);
+}
+.item.line-item {
+  padding: 0;
+  overflow: visible;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.item.line-item::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  height: var(--lt-px, 1px);
+  background: var(--lc, #111);
+}
+.item.line-item.line-dotted::after {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--lc, #111) 0,
+    var(--lc, #111) var(--lt-px, 1px),
+    transparent var(--lt-px, 1px),
+    transparent calc(var(--lt-px, 1px) * 2.5)
+  );
+}
+.item.line-item.line-dashed::after {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--lc, #111) 0,
+    var(--lc, #111) calc(var(--lt-px, 1px) * 4),
+    transparent calc(var(--lt-px, 1px) * 4),
+    transparent calc(var(--lt-px, 1px) * 6.5)
+  );
+}
+@media print {
+  .item.line-item {
+    --lt-px: var(--ps-lt, 1px) !important;
+  }
+  .item.line-item:not(.has-bg) {
+    background: none !important;
+  }
+  .item {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 }
 
 .item.text-item {
