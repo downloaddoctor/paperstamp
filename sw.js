@@ -247,12 +247,17 @@ async function checkForUpdates(clientId) {
 async function handleLocal(request) {
   const cached = await caches.match(request);
   if (cached) return cached;
-  const fresh = await fetch(request);
-  if (fresh && fresh.ok) {
-    const cache = await caches.open(RUNTIME_CACHE);
-    cache.put(request, fresh.clone());
+  try {
+    const fresh = await fetch(request);
+    if (fresh && fresh.ok) {
+      const cache = await caches.open(RUNTIME_CACHE);
+      cache.put(request, fresh.clone());
+    }
+    return fresh;
+  } catch (err) {
+    // Offline and not cached: answer cleanly instead of an uncaught rejection.
+    return new Response('Offline', { status: 503, statusText: 'Offline' });
   }
-  return fresh;
 }
 
 /* Fonts: cache-first with best-effort opaque caching. */
