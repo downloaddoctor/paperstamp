@@ -104,6 +104,7 @@ function assetValKey(url) {
    reloads. When a validator is unavailable it falls back to fetching. */
 async function refreshChangedAssets() {
   const cache = await caches.open(SHELL_CACHE);
+  let failed = false;
   await Promise.all(
     SHELL_ASSETS.map(async (url) => {
       const remote = await headValidator(url);
@@ -112,16 +113,18 @@ async function refreshChangedAssets() {
       /* No stored value (fresh) or a different value => refetch. */
       if (remote && stored && remote === stored) return;
       try {
-        const res = await fetch(url, { cache: 'reload' });
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res || !res.ok) failed = true;
         if (res && res.ok) {
           await cache.put(url, res.clone());
           await writeStored(key, remote || validatorOf(res) || '');
         }
       } catch (err) {
-        /* Keep the cached copy on failure. */
+        failed = true; /* keep the cached copy; retried on the next check */
       }
     })
   );
+  return !failed;
 }
 
 /* Record per-asset validators after a bulk precache (install time). */
@@ -140,11 +143,23 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(SHELL_CACHE)
-      .then((cache) => cache.addAll(SHELL_ASSETS))
+      .then((cache) => cache.addAll(SHELL_ASSETS.map((u) => new Request(u, { cache: 'no-cache' }))))
       .then(async () => {
         const v = await fetchSentinelValidator();
         if (v) await writeStoredValidator(v);
         await recordAssetValidators();
+        try {
+          const fc = await caches.open(FONT_CACHE);
+          const r = await fetch('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+          if (r && r.ok) {
+            const css = await r.clone().text();
+            await fc.put('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap', r);
+            const urls = Array.from(new Set(css.match(/https:\/\/fonts\.gstatic\.com\/[^)'"\s]+/g) || []));
+            await Promise.all(urls.map(async (u) => {
+              try { const f = await fetch(u); if (f && f.ok) await fc.put(u, f); } catch (_) { }
+            }));
+          }
+        } catch (_) { }
       })
       .then(() => self.skipWaiting())
   );
@@ -178,13 +193,8 @@ function isFontRequest(url) {
 async function handleNavigation(request) {
   const cached = await caches.match(request);
   if (cached) {
-    fetch(request)
-      .then((fresh) => {
-        if (fresh && fresh.ok) {
-          caches.open(SHELL_CACHE).then((cache) => cache.put(request, fresh));
-        }
-      })
-      .catch(() => {});
+    // No background refresh: HTML changes only together with its assets in
+    // refreshChangedAssets(), so HTML and JS/CSS never mismatch.
     return cached;
   }
 
@@ -223,12 +233,14 @@ async function checkForUpdates(clientId) {
   const stored = await readStoredValidator();
   if (stored === remote) return;
 
-  await refreshChangedAssets();
+  if (!(await refreshChangedAssets())) {
+    await writeLastCheck('0'); /* retry on the next navigation */
+    return;
+  }
   await writeStoredValidator(remote);
 
-  if (!clientId) return;
-  const client = await self.clients.get(clientId);
-  if (client) client.postMessage({ type: 'paperstamp-update-ready' });
+  const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  for (const c of all) c.postMessage({ type: 'paperstamp-update-ready' });
 }
 
 /* Static local assets: cache-first. */
