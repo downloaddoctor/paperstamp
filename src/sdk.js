@@ -11,18 +11,6 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  /* Resolve the directory this SDK was loaded from, so hosts don't need src. */
-  const SELF_DIR = (() => {
-    const cs = document.currentScript;
-    if (!cs || !cs.src) return null;
-    try {
-      return new URL('.', cs.src).href;
-    } catch (e) {
-      return null;
-    }
-  })();
-  const defaultSrc = () => (SELF_DIR ? SELF_DIR + 'sdk.html' : null);
-
   function createInstance(iframe, opts) {
     const inst = {
       ready: false,
@@ -314,7 +302,6 @@
   /**
    * Create a hidden iframe pointed at PaperStamp.
    * opts:
-   *   src           - plugin URL (auto-derived from sdk.js location)
    *   origin        - ignored (origin not enforced; postMessage always uses '*')
    *   width/height  - iframe size (default 0x0, hidden)
    *   container     - parent element (default document.body)
@@ -325,10 +312,11 @@
    */
   function embed(opts) {
     opts = opts || {};
-    const src = opts.src || defaultSrc();
-    if (!src)
+    /* Single-file build: the runtime ships inside this script and is loaded
+       into an srcdoc iframe, so no separate sdk.html request is needed. */
+    if (typeof window.__PS_RUNTIME_SRC !== 'string')
       throw new Error(
-        'PaperStamp.embed: could not resolve plugin URL. Pass opts.src explicitly.'
+        'PaperStamp.embed: runtime missing. Load paperstamp.min.js.'
       );
 
     const origin = '*'; // origin not enforced — any host allowed
@@ -350,10 +338,15 @@
       h +
       ';position:' +
       pos;
-    iframe.src = src;
+    iframe.srcdoc =
+      '<!doctype html><html><head><meta charset="UTF-8">' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+      '<title>PaperStamp</title></head><body><script>' +
+      window.__PS_RUNTIME_SRC.replace(/<\/script/gi, '<\/script') +
+      '</script></body></html>';
     (opts.container || document.body).appendChild(iframe);
 
-    return createInstance(iframe, Object.assign({}, opts, { origin, src }));
+    return createInstance(iframe, Object.assign({}, opts, { origin }));
   }
 
   return { embed, version: '1' };

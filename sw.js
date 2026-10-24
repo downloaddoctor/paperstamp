@@ -191,7 +191,9 @@ function isFontRequest(url) {
    paint), refreshing that cache entry from the network in the background.
    Update detection is separate — see checkForUpdates(). */
 async function handleNavigation(request) {
-  const cached = await caches.match(request);
+  /* ignoreSearch: sdk.html?layoutId=...&data=... must hit the cached shell
+     page offline instead of falling through to the index.html fallback. */
+  const cached = await caches.match(request, { ignoreSearch: true });
   if (cached) {
     // No background refresh: HTML changes only together with its assets in
     // refreshChangedAssets(), so HTML and JS/CSS never mismatch.
@@ -245,7 +247,7 @@ async function checkForUpdates(clientId) {
 
 /* Static local assets: cache-first. */
 async function handleLocal(request) {
-  const cached = await caches.match(request);
+  const cached = await caches.match(request, { ignoreSearch: true });
   if (cached) return cached;
   try {
     const fresh = await fetch(request);

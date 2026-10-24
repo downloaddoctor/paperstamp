@@ -17,6 +17,8 @@ npm-debug.log*
 .env
 .env.local
 
-# Build output (none currently, reserved)
+# Build output
 dist/
 build/
+node_modules/
+.pnpm-store/

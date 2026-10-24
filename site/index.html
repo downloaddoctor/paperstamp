@@ -5,17 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>PaperStamp Designer</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <link rel="manifest" href="manifest.webmanifest" />
-    <meta name="theme-color" content="#3454d1" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="PaperStamp" />
-    <link rel="apple-touch-icon" href="favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
     <style>
       html,
       body {
@@ -25,10 +14,12 @@
         overflow: hidden;
         background: #f5f6f9;
       }
+
       #host {
         position: fixed;
         inset: 0;
       }
+
       #host iframe {
         display: block;
         width: 100%;
@@ -37,12 +28,20 @@
       }
     </style>
   </head>
+
   <body>
     <div id="host"></div>
-    <script src="sdk.js"></script>
     <script>
-      // Host page: embed the plugin full-bleed and open the designer on ready.
-      const lp = PaperStamp.embed({
+      document.write(
+        '<script src="' +
+          (/[?&]dev=1(&|$)/.test(location.search)
+            ? 'paperstamp.dev.js'
+            : 'paperstamp.min.js') +
+          '"><\/script>'
+      );
+    </script>
+    <script>
+      var lp = PaperStamp.embed({
         container: document.getElementById('host'),
         width: '100%',
         height: '100%',

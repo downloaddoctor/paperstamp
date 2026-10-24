@@ -65,6 +65,15 @@
 
   const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
   const round1 = (n) => Math.round(n * 10) / 10;
+  /* URLSearchParams.get() already percent-decodes, so try plain JSON first;
+     only fall back to decodeURIComponent for hosts that double-encoded. */
+  function parseDataParam(raw) {
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      return JSON.parse(decodeURIComponent(raw));
+    }
+  }
   const on = (n, ev, fn) => {
     if (n) n.addEventListener(ev, fn);
   };
@@ -144,10 +153,11 @@
     const errors = [];
     const w = Number(d.pageWmm);
     const h = Number(d.pageHmm);
-    if (!Number.isFinite(w) || w <= 0)
-      errors.push('pageWmm must be a positive number');
-    if (!Number.isFinite(h) || h <= 0)
-      errors.push('pageHmm must be a positive number');
+    const MAX_PAGE_MM = 5000;
+    if (!(w >= 1 && w <= MAX_PAGE_MM))
+      errors.push('pageWmm must be a number between 1 and ' + MAX_PAGE_MM);
+    if (!(h >= 1 && h <= MAX_PAGE_MM))
+      errors.push('pageHmm must be a number between 1 and ' + MAX_PAGE_MM);
     const orientation =
       d.orientation === 'landscape' ? 'landscape' : 'portrait';
     const items = [];
@@ -1050,7 +1060,7 @@
       try {
         /* malformed data param — proceed with null fieldValues */
 
-        fv = JSON.parse(decodeURIComponent(raw));
+        fv = parseDataParam(raw);
       } catch (e) { }
     }
     printLayout(layoutId, fv);

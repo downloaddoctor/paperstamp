@@ -1,25 +1,25 @@
 # paperstamp
 
-> Static, dependency-free browser layout designer + print runtime. Design forms, bind data, print at exact positions onto pre-printed paper. No build step, no server, no npm.
+> Static, dependency-free browser layout designer + print runtime. Design forms, bind data, print at exact positions onto pre-printed paper. No server, no npm for consumers (one prebuilt script).
 
 paperstamp renders a `layoutDef` (page size, orientation, positioned text items) onto a page-sized canvas and prints it at exact mm positions. It can run standalone (designer) or embedded in any host via a hidden iframe + `postMessage`.
 
 ## Live URLs (usable directly, no install)
 
 - Designer: https://downloaddoctor.github.io/paperstamp/
-- Embed runtime: https://downloaddoctor.github.io/paperstamp/sdk.html
-- Host SDK (script): https://downloaddoctor.github.io/paperstamp/sdk.js
+- Single-file script: https://downloaddoctor.github.io/paperstamp/paperstamp.min.js
 - SDK demo: https://downloaddoctor.github.io/paperstamp/example.html
 
-`paperstamp` is published on GitHub Pages, so external projects can load the SDK
+`paperstamp` is published on GitHub Pages, so external projects can load it
 straight from the live URL — no clone, no npm, no bundler:
 
 ```html
-<script src="https://downloaddoctor.github.io/paperstamp/sdk.js"></script>
+<script src="https://downloaddoctor.github.io/paperstamp/paperstamp.min.js"></script>
 ```
 
-`sdk.js` auto-derives its iframe target (`sdk.html`) from its own
-`<script src>`, so no `src` option is required.
+One file holds the SDK, runtime, designer and CSS. `PaperStamp.embed()` builds an
+isolated `srcdoc` iframe from it, so no `src` option or second request is needed.
+Layouts are stored in the host page's `localStorage`.
 
 ## Source
 
@@ -30,10 +30,9 @@ straight from the live URL — no clone, no npm, no bundler:
 ## Minimal integration (host page)
 
 ```html
-<script src="https://downloaddoctor.github.io/paperstamp/sdk.js"></script>
+<script src="https://downloaddoctor.github.io/paperstamp/paperstamp.min.js"></script>
 <script>
   const lp = PaperStamp.embed({
-    origin: location.origin,
     onReady: ({ layouts }) => console.log('ready', layouts),
     onDone:  (job)       => console.log('printed', job),
     onError: (err)       => console.error(err.code, err.message)

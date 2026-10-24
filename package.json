@@ -1,0 +1,19 @@
+{
+  "name": "paperstamp",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Layout designer and exact-position print runtime. One dependency-free script.",
+  "type": "module",
+  "packageManager": "pnpm@12.14.0",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "node dev.js",
+    "test": "node --test test/core.test.js",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "prettier": "^3.3.0"
+  },
+  "license": "MIT"
+}
