@@ -5,7 +5,7 @@ paperstamp: static browser layout designer. src/core/ renders a layoutDef onto a
 src/ -> runtime sources (bundled by build.js)
 site/ -> static pages copied into dist/ (index.html, example.html, favicon.svg, llms.txt)
 test/ -> node:test suite, extracts the runtime string from dist/paperstamp.js and runs it in a stubbed vm
-dist/ -> build output, deployed to GitHub Pages (gitignored)
+dist/ -> build output, committed; opens directly via dist/index.html (file://), and the Pages workflow uploads it as-is (no CI build, so run pnpm build before every commit)
 .github/workflows/ -> ci.yml, pages.yml, release.yml (GITHUB_TOKEN only)
 
 # ENTRY-POINTS
@@ -68,7 +68,7 @@ localStorage 'paperstampLayouts' -> {[name]: layout}; capped at MAX_LAYOUTS=100,
 
 # ENV
 Node >=22, pnpm 12.14.0 (packageManager pinned), esbuild + prettier dev deps
-pnpm build -> dist/; pnpm test -> node --test test/core.test.js (requires built dist/)
+pnpm build -> dist/ (commit it); pnpm test -> node --test test/core.test.js (requires built dist/)
 
 # TESTING
 test/core.test.js -> vm with stubbed DOM; covers public API surface, sanitize range/clamp/dedupe, LRU cap
