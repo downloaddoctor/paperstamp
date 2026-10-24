@@ -132,6 +132,7 @@ lp.import(layoutDef);
   needs Chrome `--kiosk-printing` or an Electron/CEF host.
 - **Safari** `@page` mm sizing is approximate — prefer Chrome/Edge/Firefox for
   exact positioning.
+- **Strict host CSP:** allow `blob:` in `frame-src` and `script-src` (no `unsafe-inline` needed); `style-src` needs `'unsafe-inline'` for the iframe's inline `<style>` blocks, which inherit the host CSP.
 - **`sandbox` iframes** need `allow-modals allow-same-origin allow-scripts` or
   printing is blocked (`E_PRINT_BLOCKED`).
 - Item text is rendered with `textContent` — HTML in field values is never

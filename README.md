@@ -73,6 +73,7 @@ See [PLUGIN.md](PLUGIN.md) for the protocol, [INTEGRATION.md](INTEGRATION.md) fo
 
 - **Browser support:** Chrome, Edge, Firefox. Safari `@page` mm positioning is approximate.
 - **Silent printing:** `window.print()` always shows the dialog; use Chrome `--kiosk-printing` or an Electron host.
+- **Strict CSP:** hosts must allow `blob:` in `frame-src` and `script-src`, and `'unsafe-inline'` in `style-src`.
 - **Storage:** layouts live in `localStorage` (`paperstampLayouts`, capped at 100, LRU evicted).
 
 ## License

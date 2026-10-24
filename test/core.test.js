@@ -17,16 +17,16 @@ vm.runInNewContext(
   readFileSync(new URL('../dist/sdk.js', import.meta.url), 'utf8'),
   host
 );
-let doc = '';
+const blobs = [];
 host.Blob = class {
   constructor(parts) {
-    doc = parts[0];
+    blobs.push(parts[0]);
   }
 };
 host.URL = { createObjectURL: () => 'blob:test' };
 host.PaperStamp.embed();
 await null;
-const code = doc.slice(doc.indexOf('<script>') + 8, doc.lastIndexOf('</script>'));
+const code = blobs[0];
 
 function fakeEl() {
   return {

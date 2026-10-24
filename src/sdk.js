@@ -25,17 +25,23 @@
     return '<style>' + css + '</style><style id="psDesignerStyle" media="not all">' + designerCss + '</style>' + designerHtml;
   }
 
+  /* Runtime as a blob script (not inline), so a host CSP only needs script-src blob:, no unsafe-inline. */
+  function blobScript(code, mod) {
+    const url = URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
+    return '<script' + (mod ? ' type="module"' : '') + ' src="' + url + '"><\/script>';
+  }
+
   /* Dev (no build) reads src/ files; the build inlines the same pieces as constants. */
   function sources(base) {
     if (typeof __PS_RUNTIME__ !== 'undefined')
       return Promise.resolve({
         assets: assetsHtml(__PS_BASE_CSS__, __PS_DESIGNER_CSS__, __PS_DESIGNER_HTML__),
-        script: '<script>' + __PS_RUNTIME__.replace(/<\/script/gi, '<\/script') + '<\/script>'
+        script: blobScript(__PS_RUNTIME__, false)
       });
     const g = (f) => fetch(base + f).then((r) => r.text());
     return Promise.all([g('style.css'), g('designer.css'), g('designer.html')]).then((a) => ({
       assets: assetsHtml(a[0], a[1], a[2]),
-      script: '<script type="module">await import(' + JSON.stringify(base + 'core/index.js') + ');<\/script>'
+      script: blobScript('import ' + JSON.stringify(base + 'core/index.js') + ';', true)
     }));
   }
 

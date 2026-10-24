@@ -7,7 +7,7 @@ index.html -> loads src/sdk.js directly and calls PaperStamp.embed({showDesigner
 dist/index.html -> build.js copies index.html and only swaps src/sdk.js for sdk.js (same embed call as dev)
 example.html, llms.txt -> root; example.html needs dist/sdk.js; build.js copies them into dist/ with dist/ and assets/ prefixes stripped
 assets/ -> favicon.svg
-test/ -> node:test suite, runs dist/sdk.js with a stub Blob, takes the runtime from the blob HTML and runs it in a stubbed vm
+test/ -> node:test suite, runs dist/sdk.js with a stub Blob, takes the runtime from blobs[0] (the runtime script blob, created before the frame HTML blob) and runs it in a stubbed vm
 dist/ -> build output, gitignored; pages.yml runs npm ci + npm run build in CI and deploys dist/
 .github/workflows/ -> ci.yml, pages.yml, release.yml (GITHUB_TOKEN only)
 
@@ -61,6 +61,7 @@ scripts/build.js -> `pnpm build`; no dev server; esbuild: bundleIife(dev) bundle
 
 # ARCHITECTURE
 no PWA, no runtime fetches in the bundled build; nothing registers a service worker
+runtime script is loaded via blobScript (blob URL <script src>), not inline; host CSP needs blob: in frame-src + script-src and 'unsafe-inline' in style-src
 src/sw.js -> kill switch only (copied to dist/sw.js): replaces the retired worker in old visitors' browsers, clears caches, unregisters itself; keep it deployed, never register it
 PaperStamp `on` = DOM addEventListener helper; `onEvent` = event bus subscription used by designer
 designer:close -> teardown removes [data-paperstamp-designer] nodes, drops body.designer-mode; reopen re-runs flags.designer.init (via loadDesigner)
