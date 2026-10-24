@@ -787,8 +787,8 @@
 }
 
 /* ---------- Minimal mode (pan-only) ---------- */
-/* Hides every editing affordance; keeps only the zoom bar, the layout-name
-   field and the minimal toggle itself. Panning (left-drag on empty bg,
+/* Hides every editing affordance and the minimal toggle itself; keeps only the zoom bar and the layout-name
+   field. Panning (left-drag on empty bg,
    wheel, middle-mouse, Space+left-drag) stays available. */
 
 body.designer-minimal #toolRail,
@@ -796,6 +796,7 @@ body.designer-minimal #itemToolbar,
 body.designer-minimal #geomBar,
 body.designer-minimal #pageSetupBar,
 body.designer-minimal #bottomRightBar,
+body.designer-minimal #minimalToggleBtn,
 body.designer-minimal .tool-popover,
 body.designer-minimal #layoutComboBtn,
 body.designer-minimal #layoutComboList,
