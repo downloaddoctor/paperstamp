@@ -37,7 +37,7 @@ async function bundleIife(entry, dev) {
    strings; core and designer share one bundle (src/entry.js). The designer
    only builds its DOM when loadDesigner()/openDesigner() is called. dev=true
    keeps the self-test (__PS_DEV__), otherwise it is dead-code eliminated. */
-async function bundleRuntime(dev) {
+async function bundleRuntime(dev, external) {
   const [baseCss, designerCss, designerHtml, shell, app] = await Promise.all([
     read('style.css'),
     read('designer.css'),
@@ -48,8 +48,8 @@ async function bundleRuntime(dev) {
   return [
     '(function () {',
     '  window.__PS_BUNDLE = {',
-    '    baseCss: ' + JSON.stringify(await minCss(baseCss)) + ',',
-    '    designerCss: ' + JSON.stringify(await minCss(designerCss)) + ',',
+    '    baseCss: ' + (external ? '""' : JSON.stringify(await minCss(baseCss))) + ',',
+    '    designerCss: ' + (external ? '""' : JSON.stringify(await minCss(designerCss))) + ',',
     '    designerHtml: ' + JSON.stringify(minHtml(designerHtml)),
     '  };',
     '})();',
@@ -87,6 +87,13 @@ for (const [out, dev, minify] of [
       ';\n' +
       sdk.outputFiles[0].text
   );
+}
+/* Direct-open page (file:// and Pages): style.css + app.js, no iframe, no fetch. */
+{
+  const [b, d] = await Promise.all([read('style.css'), read('designer.css')]);
+  await writeFile(path.join(dist, 'style.css'), (await minCss(b)) + (await minCss(d)));
+  const app = await transform(await bundleRuntime(false, true), { minify: true, target: 'es2019' });
+  await writeFile(path.join(dist, 'app.js'), app.code);
 }
 await cp(path.join(root, 'site'), dist, { recursive: true });
 

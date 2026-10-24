@@ -54,7 +54,8 @@ Layouts live in the host page's own `localStorage`, since the iframe is `srcdoc`
 
 ```
 pnpm install
-pnpm dev     # watch + rebuild + serve dist/ at http://localhost:3000
+# open dist/index.html directly in a browser, no server needed
+pnpm dev     # optional: watch + rebuild + serve dist/ at http://localhost:3000
 pnpm build   # -> dist/ (paperstamp(.min).js, site pages)
 pnpm test
 ```

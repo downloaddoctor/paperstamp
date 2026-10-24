@@ -12,7 +12,7 @@ dist/ -> build output, committed; opens directly via dist/index.html (file://), 
 dist/paperstamp.js, dist/paperstamp.min.js -> single file for hosts: window.__PS_RUNTIME_SRC (runtime string) + SDK; embed() builds a srcdoc iframe running the runtime
 dist/paperstamp.dev.js -> same as paperstamp.js plus the ?dev=1 self-test (__PS_DEV__=true); prod builds dead-code-eliminate it; site/index.html and site/example.html load it instead of paperstamp.min.js when the page URL has ?dev=1
 # the runtime (shell + one bundle of core and designer + inlined css/html strings) is embedded as a string and runs inside the srcdoc iframe; exposes window.PaperStampCore + window.PaperStamp there
-dist/index.html -> host page: full-bleed iframe, openDesigner() on ready
+dist/index.html + dist/app.js + dist/style.css -> direct-open designer page (works from file://, no iframe, no fetch); app.js is the runtime built with empty __PS_BUNDLE css strings, style.css = base + designer css; index.html calls PaperStampCore.openDesigner()
 dist/example.html -> SDK demo (controls left, live preview right)
 iframe URL params ?design=1 and ?layoutId=&data=<json> are only honoured when the runtime is served as a page
 no auto-close: plugin never calls window.close() (host owns iframe lifecycle)
