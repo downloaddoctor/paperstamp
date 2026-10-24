@@ -39,7 +39,6 @@ export function cacheEls() {
     'zoom100Btn',
     'zoomFitBtn',
     'zoomPctLabel',
-    'minimalToggleBtn',
     'railPage',
     'railGuide',
     'geomBar',

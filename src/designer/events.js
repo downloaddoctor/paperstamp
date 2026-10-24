@@ -19,7 +19,7 @@ import {
   handleClearAll
 } from './items.js';
 import { deleteLayout, saveLayout } from './layouts.js';
-import { renderFillForm, setMinimalMode, setMode } from './modes.js';
+import { renderFillForm, setMode } from './modes.js';
 import {
   closeAllPopovers,
   openPopover,
@@ -39,9 +39,6 @@ export function wireEvents() {
   on(el.zoomOutBtn, 'click', () => core.zoomBy(-ZOOM_STEP));
   on(el.zoom100Btn, 'click', () => core.setZoomScale(1));
   on(el.zoomFitBtn, 'click', () => core.setZoomMode('fit'));
-  on(el.minimalToggleBtn, 'click', () =>
-    setMinimalMode(!document.body.classList.contains('designer-minimal'))
-  );
 
   const chrome = el.chrome || document;
   chrome.querySelectorAll('.rail-btn[data-panel]').forEach((btn) => {
@@ -280,11 +277,6 @@ export function wireEvents() {
     };
     const typing = isTyping();
     if (typing) return;
-    if ((e.key === 'm' || e.key === 'M') && !e.ctrlKey && !e.metaKey) {
-      e.preventDefault();
-      setMinimalMode(!document.body.classList.contains('designer-minimal'));
-      return;
-    }
     if (e.key === 'Escape') {
       closeAllPopovers();
       if (state.selectedId != null) {

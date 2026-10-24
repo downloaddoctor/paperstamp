@@ -818,30 +818,3 @@ body.designer-minimal .item {
   cursor: default;
 }
 
-.minimal-toggle-btn {
-  min-width: 32px;
-  height: 30px;
-  border: none;
-  background: transparent;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  font-family: inherit;
-  color: var(--ink-soft);
-  line-height: 1;
-  padding: 0 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease;
-}
-
-.minimal-toggle-btn:hover {
-  background: var(--surface-hover);
-  color: var(--ink);
-}
-
-.minimal-toggle-btn.active {
-  background: var(--accent-soft);
-  color: var(--accent);
-}

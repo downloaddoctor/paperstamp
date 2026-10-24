@@ -441,21 +441,6 @@ const steps = [
     }
   ],
   [
-    'minimal mode (M key)',
-    async () => {
-      await press('m');
-      assert(
-        document.body.classList.contains('designer-minimal'),
-        'minimal on'
-      );
-      await press('m');
-      assert(
-        !document.body.classList.contains('designer-minimal'),
-        'minimal off'
-      );
-    }
-  ],
-  [
     'save layout',
     async () => {
       await type(el.layoutName, TEST_NAME);

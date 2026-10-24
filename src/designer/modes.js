@@ -68,10 +68,6 @@ export function setMode(mode) {
 export function setMinimalMode(on) {
   const minimal = !!on;
   document.body.classList.toggle('designer-minimal', minimal);
-  if (el.minimalToggleBtn) {
-    el.minimalToggleBtn.classList.toggle('active', minimal);
-    el.minimalToggleBtn.setAttribute('aria-pressed', String(minimal));
-  }
   /* Layout name stays visible but non-editable in minimal mode. */
   if (el.layoutName) {
     el.layoutName.readOnly = minimal;

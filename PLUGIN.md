@@ -124,7 +124,7 @@ The designer can be pulled in three ways:
 
 `openDesigner({ layoutId })` and `setDesignerLayout(layoutId)` differ from `previewById()`: they set the designer's layout name/select to `layoutId`, so Save and Delete operate on that saved layout rather than an anonymous sheet.`previewById()` only paints the canvas.
 
-Pass `minimal: true` to either call to open straight into minimal mode — pan/zoom-only, all editing chrome hidden, same as pressing the in-designer minimal toggle (or the `M` key) after opening.
+Pass `minimal: true` to either call to open straight into minimal mode — pan/zoom-only, all editing chrome hidden. This is the only way to enter minimal mode: the designer has no minimal toggle button and no `M` key.
 
 There is no `?embed=1` and no `body.embed-mode` — the runtime is always the embed runtime, and it ships chrome-free until the designer is loaded. Loading the designer adds `body.designer-mode`; chrome comes from the inlined designer markup + CSS (injected only at that point). Closing via `paperstamp:closeDesigner` / `lp.closeDesigner()` removes the injected DOM and drops `designer-mode`.
 
