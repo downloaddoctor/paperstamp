@@ -11,17 +11,43 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  /* Resolve the directory this SDK was loaded from, so hosts don't need src. */
-  const SELF_DIR = (() => {
-    const cs = document.currentScript;
-    if (!cs || !cs.src) return null;
-    try {
-      return new URL('.', cs.src).href;
-    } catch (e) {
-      return null;
-    }
-  })();
-  const defaultSrc = () => (SELF_DIR ? SELF_DIR + 'sdk.html' : null);
+  /* Folder of this script: the no-build dev path loads src/ files from it. */
+  const scriptDir =
+    typeof document !== 'undefined' && document.currentScript
+      ? document.currentScript.src.replace(/[^/]*$/, '')
+      : '';
+
+  /* Stage nodes the runtime looks up; the SDK owns the iframe HTML. */
+  const STAGE =
+    '<div id="stage"><div id="pageViewport"><div id="page"><img id="guideImg" alt="" /></div></div></div><style id="pageSizeStyle"></style>';
+
+  function assetsHtml(css, designerCss, designerHtml) {
+    return '<style>' + css + '</style><style id="psDesignerStyle" media="not all">' + designerCss + '</style>' + designerHtml;
+  }
+
+  /* Dev (no build) reads src/ files; the build inlines the same pieces as constants. */
+  function sources(base) {
+    if (typeof __PS_RUNTIME__ !== 'undefined')
+      return Promise.resolve({
+        assets: assetsHtml(__PS_BASE_CSS__, __PS_DESIGNER_CSS__, __PS_DESIGNER_HTML__),
+        script: '<script>' + __PS_RUNTIME__.replace(/<\/script/gi, '<\/script') + '<\/script>'
+      });
+    const g = (f) => fetch(base + f).then((r) => r.text());
+    return Promise.all([g('style.css'), g('designer.css'), g('designer.html')]).then((a) => ({
+      assets: assetsHtml(a[0], a[1], a[2]),
+      script: '<script type="module">await import(' + JSON.stringify(base + 'core/index.js') + ');<\/script>'
+    }));
+  }
+
+  /* The one iframe path, dev and prod: a blob document. */
+  function frameUrl(s) {
+    const html =
+      '<!doctype html><html><head><meta charset="UTF-8">' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+      '<title>PaperStamp</title></head><body>' + STAGE + s.assets + s.script +
+      '</body></html>';
+    return URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+  }
 
   function createInstance(iframe, opts) {
     const inst = {
@@ -81,6 +107,8 @@
           layoutDefs: inst.layoutDefs
         });
         flushQueue();
+        if (opts.showDesigner)
+          post({ type: 'paperstamp:openDesigner', minimal: false });
         if (inst.autoShow) {
           if (inst.defaultLayout) {
             api.preview({ layoutDef: inst.defaultLayout });
@@ -314,10 +342,10 @@
   /**
    * Create a hidden iframe pointed at PaperStamp.
    * opts:
-   *   src           - plugin URL (auto-derived from sdk.js location)
    *   origin        - ignored (origin not enforced; postMessage always uses '*')
    *   width/height  - iframe size (default 0x0, hidden)
    *   container     - parent element (default document.body)
+   *   showDesigner  - true shows the designer UI on ready; false (default) is preview/print only
    *   autoShow      - if true (default), SDK auto-sends a layout after ready
    *   defaultLayout - layoutDef to preview() on ready (highest precedence)
    *   layoutId      - plugin-side saved layout name to printById() on ready
@@ -325,10 +353,13 @@
    */
   function embed(opts) {
     opts = opts || {};
-    const src = opts.src || defaultSrc();
-    if (!src)
+    /* Single-file build: the runtime (preview, print and designer, no lazy
+       loading) ships inside this script and runs in a blob iframe. The
+       designer is only shown on openDesigner(). */
+    const hasRuntime = typeof __PS_RUNTIME__ !== 'undefined';
+    if (!hasRuntime && !scriptDir)
       throw new Error(
-        'PaperStamp.embed: could not resolve plugin URL. Pass opts.src explicitly.'
+        'PaperStamp.embed: runtime missing. Load sdk.js.'
       );
 
     const origin = '*'; // origin not enforced — any host allowed
@@ -350,10 +381,12 @@
       h +
       ';position:' +
       pos;
-    iframe.src = src;
+    sources(scriptDir).then((s) => {
+      iframe.src = frameUrl(s);
+    });
     (opts.container || document.body).appendChild(iframe);
 
-    return createInstance(iframe, Object.assign({}, opts, { origin, src }));
+    return createInstance(iframe, Object.assign({}, opts, { origin }));
   }
 
   return { embed, version: '1' };

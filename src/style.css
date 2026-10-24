@@ -245,8 +245,8 @@ body.designer-mode .item.line-item:not(.has-bg) {
 
 .resize-handle {
   position: absolute;
-  right: -5px;
-  bottom: -5px;
+  right: 0;
+  bottom: 0;
   width: 10px;
   height: 10px;
   background: var(--accent);

@@ -1,8 +1,8 @@
 # paperstamp
 
-A tiny, dependency-free, build-free layout designer and print runtime for the browser. Design a page in the designer, save it as a layout, and print it — or embed the runtime in a host app and drive it via `postMessage`.
+A dependency-free layout designer and print runtime for the browser. Design a page, save it as a layout, and print it at exact positions, or embed the runtime in a host app and drive it via `postMessage`.
 
-Pure static HTML/CSS/JS. No server, no build step, no npm.
+Ships as **one script**: `sdk.js` contains the host SDK plus the runtime, designer UI and all CSS. `PaperStamp.embed()` creates an isolated iframe from it (blob URL), so one request is enough. No service worker.
 
 ## Live demo
 
@@ -10,52 +10,11 @@ Pure static HTML/CSS/JS. No server, no build step, no npm.
 | ---------------------------- | -------------------------------------------------------- |
 | **Designer** (standalone)    | https://downloaddoctor.github.io/paperstamp/             |
 | **SDK demo** (embed example) | https://downloaddoctor.github.io/paperstamp/example.html |
-| **Embed runtime** (sdk.html) | https://downloaddoctor.github.io/paperstamp/sdk.html     |
 
-## What it does
-
-- **Design mode** — drag, resize, align, and style text items on a page-sized canvas (A4, Letter, Legal, or custom mm).
-- **Guide image** — upload a scanned form as a background guide; your items print onto the real pre-printed form at exact positions.
-- **Fill mode** — bind values to named fields and print.
-- **Print** — injects a dynamic `@page { size: ... }` rule so paper size matches the layout.
-- **Embed** — `sdk.js` wraps everything in a hidden iframe with a `postMessage` bridge; hosts can `preview`, `print`, `register`, `import`/`export`, and open/close the designer.
-
-## Files
-
-| File                                             | Purpose                                                                |
-| ------------------------------------------------ | ---------------------------------------------------------------------- |
-| `index.html`                                     | Designer entry — host page that embeds sdk.html and opens the designer |
-| `sdk.html`                                       | Embed/print runtime (no designer chrome)                               |
-| `core.js`                                        | Preview + print runtime, host protocol                                 |
-| `designer.html` / `designer.css` / `designer.js` | Lazy-loaded designer UI                                                |
-| `sdk.js`                                         | Host-side UMD wrapper (`PaperStamp.embed()`)                           |
-| `example.html`                                   | Runnable SDK demo                                                      |
-| `PLUGIN.md`                                      | Authoritative embedding contract                                       |
-| `INTEGRATION.md`                                 | Use it from another project (hosted or vendored)                       |
-| `llms.txt`                                       | Machine-readable summary for LLMs                                      |
-| `AGENTS.md`                                      | Architecture notes                                                     |
-
-## Use it from another project
-
-paperstamp is live on GitHub Pages, so you can use it **directly from the URL** —
-no clone, no npm:
+## Use it
 
 ```html
 <script src="https://downloaddoctor.github.io/paperstamp/sdk.js"></script>
-```
-
-`sdk.js` auto-derives the embed iframe from its own script URL. See
-[INTEGRATION.md](INTEGRATION.md) for hosted vs. self-hosted setups, or
-[llms.txt](llms.txt) for a machine-readable summary.
-
-## Quick start (designer)
-
-Open `index.html` in a browser. Add text, drag it onto the page, print.
-
-## Quick start (embed)
-
-```html
-<script src="sdk.js"></script>
 <script>
   const lp = PaperStamp.embed({
     onReady: ({ layouts }) => console.log('ready', layouts),
@@ -89,13 +48,32 @@ Open `index.html` in a browser. Add text, drag it onto the page, print.
 </script>
 ```
 
-See [PLUGIN.md](https://github.com/downloaddoctor/paperstamp/blob/main/PLUGIN.md) for the full protocol and the [live SDK demo](https://downloaddoctor.github.io/paperstamp/example.html).
+Layouts live in the host page's own `localStorage`, since the blob iframe inherits the host origin.
+
+## Develop
+
+```
+pnpm install
+pnpm build   # -> dist/ (sdk.js, sdk.dev.js)
+# dev needs no build: serve the repo root statically (e.g. npx serve) and open index.html, it loads src/ directly
+# example.html needs pnpm build (loads dist/sdk.js)
+pnpm test
+```
+
+| Path                         | Purpose                                            |
+| ---------------------------- | -------------------------------------------------- |
+| `src/`                       | runtime, designer and SDK sources                  |
+| `index.html`, `example.html` | designer page and SDK demo (root, outside `dist/`) |
+| `scripts/build.js`           | esbuild bundler producing `dist/`                  |
+| `test/`                      | `node:test` suite                                  |
+
+See [PLUGIN.md](PLUGIN.md) for the protocol, [INTEGRATION.md](INTEGRATION.md) for hosting options, and [llms.txt](llms.txt) for an LLM summary.
 
 ## Notes
 
 - **Browser support:** Chrome, Edge, Firefox. Safari `@page` mm positioning is approximate.
-- **Silent printing:** `window.print()` always shows the dialog. Use Chrome `--kiosk-printing` or an Electron host for true silent output.
-- **Storage:** Layouts are saved in `localStorage` under `paperstampLayouts` (capped at 100, LRU evicted). Export any layout you care about.
+- **Silent printing:** `window.print()` always shows the dialog; use Chrome `--kiosk-printing` or an Electron host.
+- **Storage:** layouts live in `localStorage` (`paperstampLayouts`, capped at 100, LRU evicted).
 
 ## License
 

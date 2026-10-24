@@ -7,21 +7,20 @@ paperstamp is published on **GitHub Pages**, so you can use it from any project
 
 ## TL;DR — the live links
 
-| What                          | URL                                                        |
-| ----------------------------- | ---------------------------------------------------------- |
-| Host SDK (`<script>`)         | `https://downloaddoctor.github.io/paperstamp/sdk.js`       |
-| Embed runtime (iframe target) | `https://downloaddoctor.github.io/paperstamp/sdk.html`     |
-| Standalone designer           | `https://downloaddoctor.github.io/paperstamp/`             |
-| Runnable SDK demo             | `https://downloaddoctor.github.io/paperstamp/example.html` |
+| What                            | URL                                                             |
+| ------------------------------- | --------------------------------------------------------------- |
+| Single-file script (`<script>`) | `https://downloaddoctor.github.io/paperstamp/sdk.js` |
+| Standalone designer             | `https://downloaddoctor.github.io/paperstamp/`                  |
+| Runnable SDK demo               | `https://downloaddoctor.github.io/paperstamp/example.html`      |
 
-Load the SDK and it wires up the iframe for you:
+Load one script and `PaperStamp.embed()` builds an isolated blob-URL iframe from it:
 
 ```html
 <script src="https://downloaddoctor.github.io/paperstamp/sdk.js"></script>
 ```
 
-`sdk.js` derives the plugin URL (`sdk.html`) from its own
-`<script src>`, so no `src` option is needed.
+No second request and no `src` option are needed.
+Layouts are stored in the host page's own `localStorage`, since the blob iframe inherits the host origin.
 
 ---
 
@@ -78,13 +77,10 @@ so you **cannot** read/write it directly. Send everything in the message
 
 ## Option B — self-host (vendored)
 
-Copy these files into your project and serve them same-origin:
+Build (`pnpm build`) and copy one file from `dist/` into your project:
 
 ```
 sdk.js
-sdk.html
-core.js
-style.css
 ```
 
 Then:
@@ -93,13 +89,11 @@ Then:
 <script src="/vendor/paperstamp/sdk.js"></script>
 ```
 
-Same-origin self-hosting puts the plugin's `localStorage` on your own origin,
-so you can read/write `paperstampLayouts` directly (hosted embedding cannot).
+The blob iframe shares your origin, so you can read/write `paperstampLayouts` directly.
 
-To use the **designer** in your own app, also copy `designer.html`,
-`designer.css`, `designer.js` and load the designer via
-`lp.openDesigner()`, `lp.openDesigner({ layoutId })`,
-`lp.setDesignerLayout(layoutId)`, or `sdk.html?design=1`.
+The designer is already inlined; open it via
+`lp.openDesigner()`, `lp.openDesigner({ layoutId })` or
+`lp.setDesignerLayout(layoutId)`.
 
 ---
 
