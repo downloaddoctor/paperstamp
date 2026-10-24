@@ -60,7 +60,8 @@ src/sdk.js -> host wrapper source
 scripts/build.js -> `pnpm build`; no dev server; esbuild: bundleIife(dev) bundles entryPoint core/index.js with define __PS_DEV__; assembles window.__PS_BUNDLE {baseCss,designerCss,designerHtml} + bundle into a runtime string, prepends it to the SDK as dist/sdk.js and dist/sdk.dev.js; copies root index.html/example.html (prefixes stripped), favicon.svg, llms.txt into dist/
 
 # ARCHITECTURE
-no service worker, no PWA, no runtime fetches in the bundled build
+no PWA, no runtime fetches in the bundled build; nothing registers a service worker
+src/sw.js -> kill switch only (copied to dist/sw.js): replaces the retired worker in old visitors' browsers, clears caches, unregisters itself; keep it deployed, never register it
 PaperStamp `on` = DOM addEventListener helper; `onEvent` = event bus subscription used by designer
 designer:close -> teardown removes [data-paperstamp-designer] nodes, drops body.designer-mode; reopen re-runs flags.designer.init (via loadDesigner)
 

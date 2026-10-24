@@ -86,5 +86,7 @@ await writeFile(
 );
 await cp(path.join(root, 'assets', 'favicon.svg'), path.join(dist, 'favicon.svg'));
 await cp(path.join(root, 'llms.txt'), path.join(dist, 'llms.txt'));
+/* One-time cleanup: replaces the retired service worker still installed in old visitors' browsers. */
+await cp(src('sw.js'), path.join(dist, 'sw.js'));
 
 console.log('built dist/ (sdk.js, sdk.dev.js)');
